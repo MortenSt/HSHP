@@ -2,23 +2,47 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>HSHP Intelligence v14</title>
+    <title>HSHP Intelligence v16 - Button Fix</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
-        .status-tag { font-size: 0.7em; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 25px; }
+        h1 { color: #38bdf8; margin: 0; font-size: 1.5rem; }
+        
+        /* Spesifikke knapper */
+        .btn-clear { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-clear:hover { background: #b91c1c; }
+        .btn-save { background: #38bdf8; color: #0f172a; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .btn-save:hover { background: #7dd3fc; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h3 { color: #38bdf8; margin: 0 0 15px 0; border-bottom: 1px solid #334155; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .info-box { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #38bdf8; }
+        .info-line { margin-bottom: 8px; font-size: 0.95em; line-height: 1.4; }
+        .label-text { color: #94a3b8; font-size: 0.8em; font-weight: bold; text-transform: uppercase; margin-right: 10px; }
+        
+        .status-tag { font-size: 0.7em; padding: 2px 6px; border-radius: 4px; margin-left: 5px; font-weight: bold; }
         .full { background: #059669; color: white; }
         .partial { background: #d97706; color: white; }
         .empty { background: #475569; color: white; }
-        .alert { background: #ef4444; color: white; font-size: 0.7em; padding: 2px 5px; border-radius: 3px; margin-top: 5px; display: inline-block; }
-        .info-box { background: #0f172a; padding: 15px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 10px; }
-        textarea { width: 100%; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 8px; margin-top: 10px; }
-        button { background: #38bdf8; border: none; padding: 10px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        
+        .alert { background: #7f1d1d; color: #fecaca; font-size: 0.75em; padding: 8px; border-radius: 4px; margin-top: 10px; display: block; border-left: 4px solid #ef4444; }
+        
+        .label-small { font-size: 0.75em; color: #94a3b8; font-weight: bold; margin-top: 15px; display: block; text-transform: uppercase; }
+        textarea { width: 100%; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 10px; box-sizing: border-box; margin-top: 5px; font-family: inherit; font-size: 0.85em; }
+        .notes-area { height: 60px; }
+        .input-area { height: 40px; }
+        .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.75em; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <h1>🚢 HSHP Intelligence Dashboard v14</h1>
+
+    <div class="header">
+        <h1>🚢 HSHP Intelligence v16</h1>
+        <button class="btn-clear" onclick="clearAll()">Slett all data</button>
+    </div>
+    
     <div class="grid" id="container"></div>
 
     <script>
@@ -32,50 +56,82 @@
         ];
 
         function draw() {
-            const container = document.getElementById('container'); container.innerHTML = '';
+            const container = document.getElementById('container');
+            if (!container) return;
+            container.innerHTML = '';
+            
             shipData.forEach(ship => {
-                const data = JSON.parse(localStorage.getItem(ship.name)) || { dep: '-', arr: '-', eta: '-', dr: '0', x: '' };
-                const drValue = parseFloat(data.dr);
-                let statusLabel = "TOM"; let statusClass = "empty";
-                if (drValue > 17) { statusLabel = "FULL"; statusClass = "full"; }
-                else if (drValue >= 14) { statusLabel = "LASTET (Begrenset)"; statusClass = "partial"; }
+                try {
+                    const data = JSON.parse(localStorage.getItem(ship.name)) || { dep: '-', arr: '-', eta: '-', dr: '-', x: '' };
+                    const drValue = parseFloat(data.dr) || 0;
+                    
+                    let statusLabel = "TOM";
+                    let statusClass = "empty";
+                    if (drValue > 17) { statusLabel = "FULL"; statusClass = "full"; }
+                    else if (drValue >= 14) { statusLabel = "LASTET (Begr.)"; statusClass = "partial"; }
 
-                // Smart-varsel for forsinkede data
-                const isChinaDeparture = data.dep.includes("CN") || data.dep.includes("Kina");
-                const potentialOldData = isChinaDeparture && drValue > 15;
+                    // Smart-varsel for Kina-avganger med gammelt dypgående
+                    const isChinaDeparture = data.dep && (data.dep.toLowerCase().includes("cn") || data.dep.toLowerCase().includes("china"));
+                    const potentialOldData = isChinaDeparture && drValue > 15;
 
-                container.innerHTML += `
-                    <div class="card">
-                        <h3>${ship.name}</h3>
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h3>${ship.name} <a href="https://www.marinetraffic.com/en/ais/details/ships/shipid:${ship.id}" target="_blank" class="mt-link">MT ↗</a></h3>
                         <div class="info-box">
-                            <div>FRA: <b>${data.dep}</b></div>
-                            <div>TIL: <b>${data.arr}</b></div>
-                            <div>STATUS: <b>${data.eta}</b></div>
-                            <div>DYP: <b>${data.dr} m</b> <span class="status-tag ${statusClass}">${statusLabel}</span></div>
-                            ${potentialOldData ? '<div class="alert">⚠️ Mulig utdaterte dypgående-data</div>' : ''}
+                            <div class="info-line"><span class="label-text">FRA:</span> <b>${data.dep || '-'}</b></div>
+                            <div class="info-line"><span class="label-text">TIL:</span> <b>${data.arr || '-'}</b></div>
+                            <div class="info-line"><span class="label-text">STATUS:</span> <b>${data.eta || '-'}</b></div>
+                            <div class="info-line"><span class="label-text">DYP:</span> <b>${data.dr || '-'} m</b> <span class="status-tag ${statusClass}">${statusLabel}</span></div>
+                            ${potentialOldData ? '<span class="alert">⚠️ Mulig utdaterte data (Kina-avgang)</span>' : ''}
                         </div>
-                        <textarea id="mt-${ship.name}" placeholder="Lim inn rådata..."></textarea>
-                        <button onclick="save('${ship.name}')">Oppdater</button>
-                    </div>
-                `;
+                        <span class="label-small">Notater (X / Kontrakter):</span>
+                        <textarea id="x-${ship.name}" class="notes-area">${data.x || ''}</textarea>
+                        <span class="label-small">Lim inn rådata:</span>
+                        <textarea id="mt-${ship.name}" class="input-area" placeholder="Lim inn fra MT her..."></textarea>
+                        <button class="btn-save" onclick="save('${ship.name}')">Oppdater & Lagre</button>
+                    `;
+                    container.appendChild(card);
+                } catch (e) {
+                    console.error("Feil ved tegning av skip:", ship.name, e);
+                }
             });
         }
 
         window.save = function(name) {
             const mtText = document.getElementById('mt-'+name).value;
+            const xText = document.getElementById('x-'+name).value;
             let current = JSON.parse(localStorage.getItem(name)) || { dep: '-', arr: '-', eta: '-', dr: '-', x: '' };
+            
             if (mtText) {
-                const drMatch = mtText.match(/Draught\s*([\d\.]+)\s*m/i);
+                const drMatch = mtText.match(/Draught\s*[:\s]*([\d\.]+)\s*m/i);
                 const etaMatch = mtText.match(/Reported ETA\s*[:\s]*([\d\-\s:\(\)\+UTC]+)/i);
+                const ataMatch = mtText.match(/Actual time of arrival\s*[:\s]*([\d\-\s:\(\)\+UTC]+)/i);
+                
                 if (drMatch) current.dr = drMatch[1];
                 if (etaMatch) current.eta = etaMatch[1].trim();
-                // Enkel ekstrahering av havn
-                if (mtText.includes("Departure from")) current.dep = mtText.split("Departure from")[1].split("\n")[0].trim();
-                if (mtText.includes("Arrival at")) current.arr = mtText.split("Arrival at")[1].split("\n")[0].trim();
+                else if (ataMatch) current.eta = "✅ Ankommet: " + ataMatch[1].trim();
+
+                const depMatch = mtText.split(/Departure from/i);
+                if (depMatch[1]) current.dep = depMatch[1].split("\n")[0].replace("at", "").trim();
+                
+                const arrMatch = mtText.split(/Arrival at/i);
+                if (arrMatch[1]) current.arr = arrMatch[1].split("\n")[0].trim();
             }
+            
+            current.x = xText;
             localStorage.setItem(name, JSON.stringify(current));
             draw();
         }
+
+        window.clearAll = function() {
+            if (confirm("Vil du slette all lagret data i dashboardet? Dette kan ikke angres.")) {
+                localStorage.clear();
+                draw();
+            }
+        }
+
+        // Initial tegning
         draw();
     </script>
 </body>
