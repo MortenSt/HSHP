@@ -2,126 +2,80 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>HSHP Dashboard v11 - ETA Fixed</title>
+    <title>HSHP Intelligence v14</title>
     <style>
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 25px; }
-        h1 { color: #38bdf8; margin: 0; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
-        h3 { color: #38bdf8; margin: 0 0 15px 0; border-bottom: 1px solid #334155; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .info-box { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #38bdf8; }
-        .info-line { margin-bottom: 8px; font-size: 0.95em; line-height: 1.4; }
-        .label-text { color: #94a3b8; font-size: 0.8em; font-weight: bold; text-transform: uppercase; margin-right: 10px; }
-        .label-small { font-size: 0.75em; color: #94a3b8; font-weight: bold; margin-top: 15px; display: block; text-transform: uppercase; }
-        textarea { width: 100%; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 10px; box-sizing: border-box; margin-top: 5px; font-family: inherit; font-size: 0.85em; height: 60px; }
-        button { background: #38bdf8; color: #0f172a; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.2s; }
-        button:hover { background: #7dd3fc; }
-        .btn-danger { background: #ef4444; color: white; width: auto; padding: 8px 15px; margin-top: 0; }
-        .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.75em; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 5px; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
+        .status-tag { font-size: 0.7em; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
+        .full { background: #059669; color: white; }
+        .partial { background: #d97706; color: white; }
+        .empty { background: #475569; color: white; }
+        .alert { background: #ef4444; color: white; font-size: 0.7em; padding: 2px 5px; border-radius: 3px; margin-top: 5px; display: inline-block; }
+        .info-box { background: #0f172a; padding: 15px; border-radius: 8px; border-left: 4px solid #38bdf8; margin-top: 10px; }
+        textarea { width: 100%; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 8px; margin-top: 10px; }
+        button { background: #38bdf8; border: none; padding: 10px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <h1>🚢 Himalaya Shipping Intelligence</h1>
-        <button class="btn-danger" onclick="clearAll()">Slett all lagret data</button>
-    </div>
-    
+    <h1>🚢 HSHP Intelligence Dashboard v14</h1>
     <div class="grid" id="container"></div>
 
     <script>
         const shipData = [
-            { name: "Mount Norefjell", id: "7549834" },
-            { name: "Mount Ita", id: "7541333" },
-            { name: "Mount Etna", id: "7628165" },
-            { name: "Mount Blanc", id: "7743297" },
-            { name: "Mount Matterhorn", id: "7811695" },
-            { name: "Mount Neblina", id: "7863292" },
-            { name: "Mount Bandeira", id: "8099631" },
-            { name: "Mount Hua", id: "8211746" },
-            { name: "Mount Elbrus", id: "8319241" },
-            { name: "Mount Denali", id: "8640573" },
-            { name: "Mount Aconcagua", id: "8795039" },
-            { name: "Mount Emai", id: "8821962" }
+            { name: "Mount Norefjell", id: "7549834" }, { name: "Mount Ita", id: "7541333" },
+            { name: "Mount Etna", id: "7628165" }, { name: "Mount Blanc", id: "7743297" },
+            { name: "Mount Matterhorn", id: "7811695" }, { name: "Mount Neblina", id: "7863292" },
+            { name: "Mount Bandeira", id: "8099631" }, { name: "Mount Hua", id: "8211746" },
+            { name: "Mount Elbrus", id: "8319241" }, { name: "Mount Denali", id: "8640573" },
+            { name: "Mount Aconcagua", id: "8795039" }, { name: "Mount Emai", id: "8821962" }
         ];
 
-        function robustClean(text) {
-            if (!text) return "-";
-            return text.split('\n')
-                .map(line => line.trim())
-                .filter(line => {
-                    const l = line.toLowerCase();
-                    return line.length > 0 && 
-                           !l.includes("©") && !l.includes("mapbox") && 
-                           !l.includes("leaflet") && !l.includes("current voyage") &&
-                           line !== "+" && line !== "−" && line !== "|" && line !== ":";
-                })
-                .join(' ');
-        }
-
         function draw() {
-            const div = document.getElementById('container');
-            div.innerHTML = '';
+            const container = document.getElementById('container'); container.innerHTML = '';
             shipData.forEach(ship => {
-                const data = JSON.parse(localStorage.getItem(ship.name)) || { dep: '-', arr: '-', eta: '-', x: '' };
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <h3>${ship.name} <a href="https://www.marinetraffic.com/en/ais/details/ships/shipid:${ship.id}" target="_blank" class="mt-link">MT ↗</a></h3>
-                    <div class="info-box">
-                        <div class="info-line"><span class="label-text">FRA:</span> <b>${data.dep}</b></div>
-                        <div class="info-line"><span class="label-text">TIL:</span> <b>${data.arr}</b></div>
-                        <div class="info-line"><span class="label-text">ETA:</span> <b>${data.eta}</b></div>
+                const data = JSON.parse(localStorage.getItem(ship.name)) || { dep: '-', arr: '-', eta: '-', dr: '0', x: '' };
+                const drValue = parseFloat(data.dr);
+                let statusLabel = "TOM"; let statusClass = "empty";
+                if (drValue > 17) { statusLabel = "FULL"; statusClass = "full"; }
+                else if (drValue >= 14) { statusLabel = "LASTET (Begrenset)"; statusClass = "partial"; }
+
+                // Smart-varsel for forsinkede data
+                const isChinaDeparture = data.dep.includes("CN") || data.dep.includes("Kina");
+                const potentialOldData = isChinaDeparture && drValue > 15;
+
+                container.innerHTML += `
+                    <div class="card">
+                        <h3>${ship.name}</h3>
+                        <div class="info-box">
+                            <div>FRA: <b>${data.dep}</b></div>
+                            <div>TIL: <b>${data.arr}</b></div>
+                            <div>STATUS: <b>${data.eta}</b></div>
+                            <div>DYP: <b>${data.dr} m</b> <span class="status-tag ${statusClass}">${statusLabel}</span></div>
+                            ${potentialOldData ? '<div class="alert">⚠️ Mulig utdaterte dypgående-data</div>' : ''}
+                        </div>
+                        <textarea id="mt-${ship.name}" placeholder="Lim inn rådata..."></textarea>
+                        <button onclick="save('${ship.name}')">Oppdater</button>
                     </div>
-                    <span class="label-small">Notater (X / Kontrakter):</span>
-                    <textarea id="x-${ship.name}">${data.x}</textarea>
-                    <span class="label-small">Lim inn rådata:</span>
-                    <textarea id="mt-${ship.name}" placeholder="Lim inn fra MT her..."></textarea>
-                    <button onclick="save('${ship.name}')">Oppdater & Lagre</button>
                 `;
-                div.appendChild(card);
             });
         }
 
         window.save = function(name) {
             const mtText = document.getElementById('mt-'+name).value;
-            const xText = document.getElementById('x-'+name).value;
-            let current = JSON.parse(localStorage.getItem(name)) || { dep: '-', arr: '-', eta: '-', x: '' };
-            
+            let current = JSON.parse(localStorage.getItem(name)) || { dep: '-', arr: '-', eta: '-', dr: '-', x: '' };
             if (mtText) {
-                const depIdx = mtText.indexOf("Departure from");
-                const arrIdx = mtText.indexOf("Arrival at");
-                const actIdx = mtText.indexOf("Actual time of departure");
-                const etaIdx = mtText.indexOf("Reported ETA");
-
-                if (depIdx !== -1 && arrIdx !== -1) {
-                    current.dep = robustClean(mtText.substring(depIdx + 14, arrIdx));
-                }
-                if (arrIdx !== -1) {
-                    let endArr = (actIdx !== -1) ? actIdx : (etaIdx !== -1 ? etaIdx : mtText.length);
-                    current.arr = robustClean(mtText.substring(arrIdx + 10, endArr));
-                }
-                
-                // NY LOGIKK FOR ETA:
-                if (etaIdx !== -1) {
-                    // Klipp ut alt etter "Reported ETA", fjern kolon og tomrom
-                    const afterEta = mtText.substring(etaIdx + 12)
-                        .replace(/^[:\s]+/, "") 
-                        .trim();
-                    // Ta den første linjen som gjenstår
-                    current.eta = afterEta.split('\n')[0].trim();
-                }
+                const drMatch = mtText.match(/Draught\s*([\d\.]+)\s*m/i);
+                const etaMatch = mtText.match(/Reported ETA\s*[:\s]*([\d\-\s:\(\)\+UTC]+)/i);
+                if (drMatch) current.dr = drMatch[1];
+                if (etaMatch) current.eta = etaMatch[1].trim();
+                // Enkel ekstrahering av havn
+                if (mtText.includes("Departure from")) current.dep = mtText.split("Departure from")[1].split("\n")[0].trim();
+                if (mtText.includes("Arrival at")) current.arr = mtText.split("Arrival at")[1].split("\n")[0].trim();
             }
-            current.x = xText;
             localStorage.setItem(name, JSON.stringify(current));
             draw();
         }
-
-        window.clearAll = function() {
-            if (confirm("Er du sikker?")) { localStorage.clear(); draw(); }
-        }
-
         draw();
     </script>
 </body>
