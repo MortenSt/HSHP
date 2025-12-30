@@ -2,13 +2,12 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>HSHP Intelligence v16 - Button Fix</title>
+    <title>HSHP Intelligence v17 - Fixed Links & Buttons</title>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 25px; }
         h1 { color: #38bdf8; margin: 0; font-size: 1.5rem; }
         
-        /* Spesifikke knapper */
         .btn-clear { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-clear:hover { background: #b91c1c; }
         .btn-save { background: #38bdf8; color: #0f172a; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; }
@@ -33,26 +32,34 @@
         textarea { width: 100%; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 10px; box-sizing: border-box; margin-top: 5px; font-family: inherit; font-size: 0.85em; }
         .notes-area { height: 60px; }
         .input-area { height: 40px; }
-        .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.75em; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 5px; }
+        .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.75em; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 5px; transition: 0.2s; }
+        .mt-link:hover { background: #38bdf8; color: #0f172a; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>🚢 HSHP Intelligence v16</h1>
+        <h1>🚢 HSHP Intelligence v17</h1>
         <button class="btn-clear" onclick="clearAll()">Slett all data</button>
     </div>
     
     <div class="grid" id="container"></div>
 
     <script>
+        // Himalaya Shipping Fleet - Offisielle IMO-numre for korrekt MT-lenking
         const shipData = [
-            { name: "Mount Norefjell", id: "7549834" }, { name: "Mount Ita", id: "7541333" },
-            { name: "Mount Etna", id: "7628165" }, { name: "Mount Blanc", id: "7743297" },
-            { name: "Mount Matterhorn", id: "7811695" }, { name: "Mount Neblina", id: "7863292" },
-            { name: "Mount Bandeira", id: "8099631" }, { name: "Mount Hua", id: "8211746" },
-            { name: "Mount Elbrus", id: "8319241" }, { name: "Mount Denali", id: "8640573" },
-            { name: "Mount Aconcagua", id: "8795039" }, { name: "Mount Emai", id: "8821962" }
+            { name: "Mount Norefjell", imo: "9939008" },
+            { name: "Mount Ita", imo: "9939967" },
+            { name: "Mount Etna", imo: "9945605" },
+            { name: "Mount Blanc", imo: "9945617" },
+            { name: "Mount Matterhorn", imo: "9945629" },
+            { name: "Mount Neblina", imo: "9945631" },
+            { name: "Mount Bandeira", imo: "9945643" },
+            { name: "Mount Hua", imo: "9945655" },
+            { name: "Mount Elbrus", imo: "9945667" },
+            { name: "Mount Emai", imo: "9945679" },
+            { name: "Mount Denali", imo: "9945681" },
+            { name: "Mount Aconcagua", imo: "9945693" }
         ];
 
         function draw() {
@@ -70,20 +77,19 @@
                     if (drValue > 17) { statusLabel = "FULL"; statusClass = "full"; }
                     else if (drValue >= 14) { statusLabel = "LASTET (Begr.)"; statusClass = "partial"; }
 
-                    // Smart-varsel for Kina-avganger med gammelt dypgående
                     const isChinaDeparture = data.dep && (data.dep.toLowerCase().includes("cn") || data.dep.toLowerCase().includes("china"));
                     const potentialOldData = isChinaDeparture && drValue > 15;
 
                     const card = document.createElement('div');
                     card.className = 'card';
                     card.innerHTML = `
-                        <h3>${ship.name} <a href="https://www.marinetraffic.com/en/ais/details/ships/shipid:${ship.id}" target="_blank" class="mt-link">MT ↗</a></h3>
+                        <h3>${ship.name} <a href="https://www.marinetraffic.com/en/ais/details/ships/imo:${ship.imo}" target="_blank" class="mt-link">MT ↗</a></h3>
                         <div class="info-box">
                             <div class="info-line"><span class="label-text">FRA:</span> <b>${data.dep || '-'}</b></div>
                             <div class="info-line"><span class="label-text">TIL:</span> <b>${data.arr || '-'}</b></div>
                             <div class="info-line"><span class="label-text">STATUS:</span> <b>${data.eta || '-'}</b></div>
                             <div class="info-line"><span class="label-text">DYP:</span> <b>${data.dr || '-'} m</b> <span class="status-tag ${statusClass}">${statusLabel}</span></div>
-                            ${potentialOldData ? '<span class="alert">⚠️ Mulig utdaterte data (Kina-avgang)</span>' : ''}
+                            ${potentialOldData ? '<span class="alert">⚠️ Sannsynligvis gamle data (Kina-avgang)</span>' : ''}
                         </div>
                         <span class="label-small">Notater (X / Kontrakter):</span>
                         <textarea id="x-${ship.name}" class="notes-area">${data.x || ''}</textarea>
@@ -92,9 +98,7 @@
                         <button class="btn-save" onclick="save('${ship.name}')">Oppdater & Lagre</button>
                     `;
                     container.appendChild(card);
-                } catch (e) {
-                    console.error("Feil ved tegning av skip:", ship.name, e);
-                }
+                } catch (e) { console.error(e); }
             });
         }
 
@@ -130,8 +134,6 @@
                 draw();
             }
         }
-
-        // Initial tegning
         draw();
     </script>
 </body>
