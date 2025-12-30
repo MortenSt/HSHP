@@ -2,37 +2,31 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>HSHP Fleet Intelligence Dashboard</title>
+    <title>HSHP Fleet Tracker - Verifisert</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; line-height: 1.6; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 10px; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        h3 { margin-top: 0; color: #38bdf8; display: flex; justify-content: space-between; font-size: 1.2em; }
-        .data-display { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85em; }
-        .data-item { margin-bottom: 4px; display: flex; justify-content: space-between; }
-        .label { color: #94a3b8; font-weight: bold; font-size: 0.75em; text-transform: uppercase; }
-        textarea { width: 100%; background: #334155; border: 1px solid #475569; color: white; border-radius: 6px; padding: 8px; font-size: 0.8em; margin-bottom: 10px; box-sizing: border-box; }
-        .x-notes { border-left: 3px solid #1da1f2; background: #1c2732; min-height: 50px; }
-        button { background: #38bdf8; color: #0f172a; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
-        button:hover { background: #7dd3fc; }
-        .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.8em; border: 1px solid #38bdf8; padding: 2px 8px; border-radius: 4px; }
-        .mt-link:hover { background: #38bdf8; color: #1e293b; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; }
+        h1 { text-align: center; color: #38bdf8; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        h3 { color: #38bdf8; margin: 0 0 15px 0; border-bottom: 1px solid #334155; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .info-box { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #38bdf8; }
+        .info-line { margin-bottom: 8px; font-size: 0.95em; }
+        .label-text { color: #94a3b8; font-size: 0.8em; font-weight: bold; text-transform: uppercase; margin-right: 10px; }
+        .label-small { font-size: 0.75em; color: #94a3b8; font-weight: bold; margin-top: 15px; display: block; text-transform: uppercase; }
+        textarea { width: 100%; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 10px; box-sizing: border-box; margin-top: 5px; font-family: inherit; font-size: 0.85em; }
+        button { background: #38bdf8; color: #0f172a; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.2s; }
+        button:hover { background: #7dd3fc; transform: translateY(-1px); }
+        .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.75em; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>🚢 HSHP Fleet Intelligence</h1>
-        <button style="width: auto; padding: 5px 15px; background: #ef4444; color: white;" onclick="clearAll()">Slett all lagret data</button>
-    </div>
+    <h1>🚢 Himalaya Shipping Intelligence</h1>
     
-    <p>Lim inn råtekst fra MarineTraffic for å oppdatere reiseinfo, og lagre notater fra X for hvert skip.</p>
-
-    <div class="grid" id="fleet-grid"></div>
+    <div class="grid" id="container"></div>
 
     <script>
-        // Komplett liste over alle 12 skip med verifiserte ShipID-er
+        // Din manuelt rettede liste med ShipID-er
         const shipData = [
             { name: "Mount Norefjell", id: "7549834" },
             { name: "Mount Ita", id: "7541333" },
@@ -48,68 +42,65 @@
             { name: "Mount Emai", id: "8821962" }
         ];
 
-        function parseMT(text) {
-            if (!text) return null;
-            const res = {};
-            // Regex for å fange opp havner og ETA fra kopiert tekst
-            const dep = text.match(/Departure from\s*([\w\s]+)/i);
-            const arr = text.match(/Arrival at\s*([\w\s]+)/i);
-            const eta = text.match(/Reported ETA:\s*([\d\-\s:]+)/i);
-            
-            res.dep = dep ? dep[1].trim() : "Mangler info";
-            res.arr = arr ? arr[1].trim() : "Mangler info";
-            res.eta = eta ? eta[1].trim() : "Ikke satt";
-            return res;
+        function cleanKeepCodes(text) {
+            if (!text) return "-";
+            let cleaned = text;
+            const noise = ["Arrival at", "Actual", "Reported", "Time", "Departure", "at ", "from "];
+            noise.forEach(word => {
+                const regex = new RegExp(word + ".*", "gi");
+                cleaned = cleaned.replace(regex, "");
+            });
+            return cleaned.trim();
         }
 
-        function save(name) {
-            const raw = document.getElementById(`in-${name}`).value;
-            const xVal = document.getElementById(`x-${name}`).value;
-            const current = JSON.parse(localStorage.getItem(name)) || {};
-            
-            if (raw) {
-                const parsed = parseMT(raw);
-                if(parsed) current.voyage = parsed;
-            }
-            current.xNotes = xVal;
-            
-            localStorage.setItem(name, JSON.stringify(current));
-            render();
-            alert("Lagret for " + name);
-        }
-
-        function clearAll() {
-            if(confirm("Sikker på at du vil slette alle lagrede notater og reisedata?")) {
-                localStorage.clear();
-                render();
-            }
-        }
-
-        function render() {
-            const grid = document.getElementById('fleet-grid');
-            grid.innerHTML = '';
+        function draw() {
+            const div = document.getElementById('container');
+            div.innerHTML = '';
             shipData.forEach(ship => {
-                const saved = JSON.parse(localStorage.getItem(ship.name)) || { voyage: {dep:'-', arr:'-', eta:'-'}, xNotes: '' };
+                const data = JSON.parse(localStorage.getItem(ship.name)) || { dep: '-', arr: '-', eta: '-', x: '' };
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
                     <h3>${ship.name} <a href="https://www.marinetraffic.com/en/ais/details/ships/shipid:${ship.id}" target="_blank" class="mt-link">MT ↗</a></h3>
-                    <div class="data-display">
-                        <div class="data-item"><span class="label">Fra:</span> <span>${saved.voyage.dep}</span></div>
-                        <div class="data-item"><span class="label">Til:</span> <span>${saved.voyage.arr}</span></div>
-                        <div class="data-item"><span class="label">ETA:</span> <span>${saved.voyage.eta}</span></div>
+                    <div class="info-box">
+                        <div class="info-line"><span class="label-text">FRA:</span> <b>${data.dep}</b></div>
+                        <div class="info-line"><span class="label-text">TIL:</span> <b>${data.arr}</b></div>
+                        <div class="info-line"><span class="label-text">ETA:</span> <b>${data.eta}</b></div>
                     </div>
-                    <div class="label">Notater fra X / Investor Guide:</div>
-                    <textarea id="x-${ship.name}" class="x-notes" placeholder="Lim inn info fra X eller rapporter her...">${saved.xNotes}</textarea>
-                    <div class="label">Oppdater reise (lim inn fra MT):</div>
-                    <textarea id="in-${ship.name}" placeholder="Departure from... Arrival at..."></textarea>
+                    <span class="label-small">Notater (X / Kontrakter):</span>
+                    <textarea id="x-${ship.name}" rows="2">${data.x}</textarea>
+                    <span class="label-small">Lim inn rådata:</span>
+                    <textarea id="mt-${ship.name}" rows="2" placeholder="Lim inn fra MT..."></textarea>
                     <button onclick="save('${ship.name}')">Oppdater & Lagre</button>
                 `;
-                grid.appendChild(card);
+                div.appendChild(card);
             });
         }
-        
-        render();
+
+        window.save = function(name) {
+            const mtText = document.getElementById('mt-'+name).value;
+            const xText = document.getElementById('x-'+name).value;
+            let current = JSON.parse(localStorage.getItem(name)) || { dep: '-', arr: '-', eta: '-', x: '' };
+            
+            if (mtText) {
+                const depPart = mtText.match(/Departure from\s*(.*?)(?=Arrival|Actual|Reported|ETA|$)/i);
+                const arrPart = mtText.match(/Arrival at\s*(.*?)(?=Actual|Reported|ETA|$)/i);
+                const etaPart = mtText.match(/ETA:\s*([\d\-\s:\(\)\+UTCa-z]+)/i);
+
+                if(depPart) current.dep = cleanKeepCodes(depPart[1]);
+                if(arrPart) current.arr = cleanKeepCodes(arrPart[1]);
+                if(etaPart) current.eta = etaPart[1].trim();
+
+                if(!depPart && mtText.includes("Arrival at")) {
+                    current.dep = cleanKeepCodes(mtText.split("Arrival at")[0]);
+                }
+            }
+            current.x = xText;
+            localStorage.setItem(name, JSON.stringify(current));
+            draw();
+        }
+
+        draw();
     </script>
 </body>
 </html>
