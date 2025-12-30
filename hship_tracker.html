@@ -2,31 +2,38 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>HSHP Fleet Intelligence</title>
+    <title>HSHP Fleet Intelligence Dashboard</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; line-height: 1.6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; line-height: 1.6; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 10px; margin-bottom: 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
         .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        h3 { margin-top: 0; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 10px; display: flex; justify-content: space-between; }
+        h3 { margin-top: 0; color: #38bdf8; display: flex; justify-content: space-between; font-size: 1.2em; }
         .data-display { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85em; }
         .data-item { margin-bottom: 4px; display: flex; justify-content: space-between; }
-        .label { color: #94a3b8; font-weight: bold; }
-        textarea { width: 100%; background: #334155; border: 1px solid #475569; color: white; border-radius: 6px; padding: 8px; font-size: 0.8em; margin-bottom: 10px; }
-        .x-notes { border-left: 3px solid #1da1f2; background: #1c2732; min-height: 40px; }
+        .label { color: #94a3b8; font-weight: bold; font-size: 0.75em; text-transform: uppercase; }
+        textarea { width: 100%; background: #334155; border: 1px solid #475569; color: white; border-radius: 6px; padding: 8px; font-size: 0.8em; margin-bottom: 10px; box-sizing: border-box; }
+        .x-notes { border-left: 3px solid #1da1f2; background: #1c2732; min-height: 50px; }
         button { background: #38bdf8; color: #0f172a; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
         button:hover { background: #7dd3fc; }
         .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.8em; border: 1px solid #38bdf8; padding: 2px 8px; border-radius: 4px; }
+        .mt-link:hover { background: #38bdf8; color: #1e293b; }
     </style>
 </head>
 <body>
 
-    <h1>🚢 Himalaya Shipping Intelligence Dashboard</h1>
-    <p>Data lagres lokalt i din nettleser. Lim inn info fra MarineTraffic og notater fra X.</p>
+    <div class="header">
+        <h1>🚢 HSHP Fleet Intelligence</h1>
+        <button style="width: auto; padding: 5px 15px; background: #ef4444; color: white;" onclick="clearAll()">Slett all lagret data</button>
+    </div>
+    
+    <p>Lim inn råtekst fra MarineTraffic for å oppdatere reiseinfo, og lagre notater fra X for hvert skip.</p>
 
     <div class="grid" id="fleet-grid"></div>
 
     <script>
-       const shipData = [
+        // Komplett liste over alle 12 skip med verifiserte ShipID-er
+        const shipData = [
             { name: "Mount Norefjell", id: "7476053" },
             { name: "Mount Ita", id: "7541333" },
             { name: "Mount Etna", id: "7628165" },
@@ -44,12 +51,14 @@
         function parseMT(text) {
             if (!text) return null;
             const res = {};
-            const dep = text.match(/Departure from\s*(.*?)(Arrival|Actual|$)/s);
-            const arr = text.match(/Arrival at\s*(.*?)(Actual|Reported|$)/s);
-            const eta = text.match(/Reported ETA:\s*(.*)/);
-            res.dep = dep ? dep[1].trim() : "-";
-            res.arr = arr ? arr[1].trim() : "-";
-            res.eta = eta ? eta[1].trim() : "-";
+            // Regex for å fange opp havner og ETA fra kopiert tekst
+            const dep = text.match(/Departure from\s*([\w\s]+)/i);
+            const arr = text.match(/Arrival at\s*([\w\s]+)/i);
+            const eta = text.match(/Reported ETA:\s*([\d\-\s:]+)/i);
+            
+            res.dep = dep ? dep[1].trim() : "Mangler info";
+            res.arr = arr ? arr[1].trim() : "Mangler info";
+            res.eta = eta ? eta[1].trim() : "Ikke satt";
             return res;
         }
 
@@ -60,12 +69,20 @@
             
             if (raw) {
                 const parsed = parseMT(raw);
-                current.voyage = parsed;
+                if(parsed) current.voyage = parsed;
             }
             current.xNotes = xVal;
             
             localStorage.setItem(name, JSON.stringify(current));
             render();
+            alert("Lagret for " + name);
+        }
+
+        function clearAll() {
+            if(confirm("Sikker på at du vil slette alle lagrede notater og reisedata?")) {
+                localStorage.clear();
+                render();
+            }
         }
 
         function render() {
@@ -76,21 +93,22 @@
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
-                    <h3>${ship.name} <a href="https://www.marinetraffic.com/en/ais/details/ships/shipid:${ship.id}" target="_blank" class="mt-link">Åpne MT ↗</a></h3>
+                    <h3>${ship.name} <a href="https://www.marinetraffic.com/en/ais/details/ships/shipid:${ship.id}" target="_blank" class="mt-link">MT ↗</a></h3>
                     <div class="data-display">
                         <div class="data-item"><span class="label">Fra:</span> <span>${saved.voyage.dep}</span></div>
                         <div class="data-item"><span class="label">Til:</span> <span>${saved.voyage.arr}</span></div>
                         <div class="data-item"><span class="label">ETA:</span> <span>${saved.voyage.eta}</span></div>
                     </div>
-                    <div class="label">Notater fra X:</div>
-                    <textarea id="x-${ship.name}" class="x-notes" placeholder="Lim inn info fra X her...">${saved.xNotes}</textarea>
+                    <div class="label">Notater fra X / Investor Guide:</div>
+                    <textarea id="x-${ship.name}" class="x-notes" placeholder="Lim inn info fra X eller rapporter her...">${saved.xNotes}</textarea>
                     <div class="label">Oppdater reise (lim inn fra MT):</div>
                     <textarea id="in-${ship.name}" placeholder="Departure from... Arrival at..."></textarea>
-                    <button onclick="save('${ship.name}')">Lagre status</button>
+                    <button onclick="save('${ship.name}')">Oppdater & Lagre</button>
                 `;
                 grid.appendChild(card);
             });
         }
+        
         render();
     </script>
 </body>
