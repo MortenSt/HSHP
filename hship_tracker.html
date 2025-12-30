@@ -2,20 +2,20 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>HSHP Fleet Tracker - Verifisert</title>
+    <title>HSHP Dashboard v9 - Final Clean</title>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; }
-        h1 { text-align: center; color: #38bdf8; margin-bottom: 20px; }
+        h1 { text-align: center; color: #38bdf8; margin-bottom: 25px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
         .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
         h3 { color: #38bdf8; margin: 0 0 15px 0; border-bottom: 1px solid #334155; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .info-box { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #38bdf8; }
-        .info-line { margin-bottom: 8px; font-size: 0.95em; }
+        .info-line { margin-bottom: 8px; font-size: 0.95em; line-height: 1.4; }
         .label-text { color: #94a3b8; font-size: 0.8em; font-weight: bold; text-transform: uppercase; margin-right: 10px; }
         .label-small { font-size: 0.75em; color: #94a3b8; font-weight: bold; margin-top: 15px; display: block; text-transform: uppercase; }
-        textarea { width: 100%; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 10px; box-sizing: border-box; margin-top: 5px; font-family: inherit; font-size: 0.85em; }
+        textarea { width: 100%; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 10px; box-sizing: border-box; margin-top: 5px; font-family: inherit; font-size: 0.85em; height: 60px; }
         button { background: #38bdf8; color: #0f172a; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.2s; }
-        button:hover { background: #7dd3fc; transform: translateY(-1px); }
+        button:hover { background: #7dd3fc; }
         .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.75em; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 5px; }
     </style>
 </head>
@@ -26,7 +26,7 @@
     <div class="grid" id="container"></div>
 
     <script>
-        // Din manuelt rettede liste med ShipID-er
+        // Dine verifiserte ShipID-er
         const shipData = [
             { name: "Mount Norefjell", id: "7549834" },
             { name: "Mount Ita", id: "7541333" },
@@ -42,15 +42,20 @@
             { name: "Mount Emai", id: "8821962" }
         ];
 
-        function cleanKeepCodes(text) {
+        // Rensefunksjon som fjerner alt unntatt selve navnet/koden
+        function robustClean(text) {
             if (!text) return "-";
-            let cleaned = text;
-            const noise = ["Arrival at", "Actual", "Reported", "Time", "Departure", "at ", "from "];
-            noise.forEach(word => {
-                const regex = new RegExp(word + ".*", "gi");
-                cleaned = cleaned.replace(regex, "");
-            });
-            return cleaned.trim();
+            return text.split('\n')
+                .map(line => line.trim())
+                .filter(line => {
+                    const l = line.toLowerCase();
+                    // Ignorer tomme linjer, kart-støy og statusord
+                    return line.length > 0 && 
+                           !l.includes("©") && !l.includes("mapbox") && 
+                           !l.includes("leaflet") && !l.includes("current voyage") &&
+                           line !== "+" && line !== "−" && line !== "|";
+                })
+                .join(' ');
         }
 
         function draw() {
@@ -68,10 +73,10 @@
                         <div class="info-line"><span class="label-text">ETA:</span> <b>${data.eta}</b></div>
                     </div>
                     <span class="label-small">Notater (X / Kontrakter):</span>
-                    <textarea id="x-${ship.name}" rows="2">${data.x}</textarea>
+                    <textarea id="x-${ship.name}">${data.x}</textarea>
                     <span class="label-small">Lim inn rådata:</span>
-                    <textarea id="mt-${ship.name}" rows="2" placeholder="Lim inn fra MT..."></textarea>
-                    <button onclick="save('${ship.name}')">Oppdater & Lagre</button>
+                    <textarea id="mt-${ship.name}" placeholder="Lim inn alt du kopierer her..."></textarea>
+                    <button onclick="save('${ship.name}')">Oppdater & Rens</button>
                 `;
                 div.appendChild(card);
             });
@@ -83,16 +88,27 @@
             let current = JSON.parse(localStorage.getItem(name)) || { dep: '-', arr: '-', eta: '-', x: '' };
             
             if (mtText) {
-                const depPart = mtText.match(/Departure from\s*(.*?)(?=Arrival|Actual|Reported|ETA|$)/i);
-                const arrPart = mtText.match(/Arrival at\s*(.*?)(?=Actual|Reported|ETA|$)/i);
-                const etaPart = mtText.match(/ETA:\s*([\d\-\s:\(\)\+UTCa-z]+)/i);
+                // Finn posisjonene til nøkkelordene
+                const depIdx = mtText.indexOf("Departure from");
+                const arrIdx = mtText.indexOf("Arrival at");
+                const actIdx = mtText.indexOf("Actual time of departure");
+                const etaIdx = mtText.indexOf("Reported ETA");
 
-                if(depPart) current.dep = cleanKeepCodes(depPart[1]);
-                if(arrPart) current.arr = cleanKeepCodes(arrPart[1]);
-                if(etaPart) current.eta = etaPart[1].trim();
+                // Trekk ut tekst mellom Departure from og Arrival at
+                if (depIdx !== -1 && arrIdx !== -1) {
+                    current.dep = robustClean(mtText.substring(depIdx + 14, arrIdx));
+                }
 
-                if(!depPart && mtText.includes("Arrival at")) {
-                    current.dep = cleanKeepCodes(mtText.split("Arrival at")[0]);
+                // Trekk ut tekst mellom Arrival at og neste seksjon (Actual eller ETA)
+                if (arrIdx !== -1) {
+                    let endArr = (actIdx !== -1) ? actIdx : (etaIdx !== -1 ? etaIdx : mtText.length);
+                    current.arr = robustClean(mtText.substring(arrIdx + 10, endArr));
+                }
+
+                // Trekk ut ETA (datoen som står på linjen etter Reported ETA:)
+                if (etaIdx !== -1) {
+                    const afterEta = mtText.substring(etaIdx + 12).trim();
+                    current.eta = afterEta.split('\n')[0].trim();
                 }
             }
             current.x = xText;
