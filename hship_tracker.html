@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>HSHP Intelligence v18 - Reporting Engine</title>
+    <title>HSHP Intelligence v19 - IMO Correction</title>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 25px; }
@@ -34,7 +34,6 @@
         .input-area { height: 40px; }
         .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.75em; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 5px; float: right; }
 
-        /* PRINT STYLES */
         @media print {
             body { background-color: white; color: black; padding: 0; }
             .btn, .mt-link, textarea, .input-area, .btn-group, .header button { display: none !important; }
@@ -51,7 +50,7 @@
 <body>
 
     <div class="header">
-        <h1>🚢 HSHP Intelligence v18</h1>
+        <h1>🚢 HSHP Intelligence v19</h1>
         <div class="btn-group">
             <button class="btn btn-report" onclick="generateReport()">Generer Rapport (PDF)</button>
             <button class="btn btn-clear" onclick="clearAll()">Slett data</button>
@@ -67,12 +66,18 @@
 
     <script>
         const shipData = [
-            { name: "Mount Norefjell", imo: "9939008" }, { name: "Mount Ita", imo: "9939967" },
-            { name: "Mount Etna", imo: "9945605" }, { name: "Mount Blanc", imo: "9945617" },
-            { name: "Mount Matterhorn", imo: "9945629" }, { name: "Mount Neblina", imo: "9945631" },
-            { name: "Mount Bandeira", imo: "9945643" }, { name: "Mount Hua", imo: "9945655" },
-            { name: "Mount Elbrus", imo: "9945667" }, { name: "Mount Emai", imo: "9945679" },
-            { name: "Mount Denali", imo: "9945681" }, { name: "Mount Aconcagua", imo: "9945693" }
+            { name: "Mount Norefjell", imo: "9939008" }, 
+            { name: "Mount Ita", imo: "9939967" },
+            { name: "Mount Etna", imo: "9939979" }, // KORRIGERT IMO
+            { name: "Mount Blanc", imo: "9945617" },
+            { name: "Mount Matterhorn", imo: "9945629" }, 
+            { name: "Mount Neblina", imo: "9945631" },
+            { name: "Mount Bandeira", imo: "9945643" }, 
+            { name: "Mount Hua", imo: "9945655" },
+            { name: "Mount Elbrus", imo: "9945667" }, 
+            { name: "Mount Emai", imo: "9945679" },
+            { name: "Mount Denali", imo: "9945681" }, 
+            { name: "Mount Aconcagua", imo: "9945693" }
         ];
 
         function draw() {
