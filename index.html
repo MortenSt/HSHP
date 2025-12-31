@@ -1,113 +1,435 @@
-import streamlit as st
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HSHP Mobil Simulator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-color: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-dim: rgba(56, 189, 248, 0.1);
+            --gold: #fbbf24;
+            --ffa-color: #a855f7;
+            --fund-color: #f59e0b;
+        }
 
-st.set_page_config(page_title="Himalaya Simulator", page_icon="⛰")
-st.title("⛰ Himalaya Shipping: Hedge & Spot")
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-# --- 1. KONFIGURASJON ---
-SHARES_OUTSTANDING = 46650000 
-FLEET_COUNT = 12
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 15px;
+            padding-bottom: 50px; /* Plass til tommel nederst */
+        }
 
-# --- 2. TIDSALINJE (Dynamisk Breakeven) ---
-st.sidebar.header("Tidsperiode")
-quarters = {
-    "Q1 2026": 0, "Q2 2026": 1, "Q3 2026": 2, "Q4 2026": 3,
-    "Q1 2027": 4, "Q2 2027": 5, "Q3 2027": 6, "Q4 2027": 7
-}
-target_qtr = st.sidebar.selectbox("Velg Kvartal", list(quarters.keys()))
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
 
-# Beregn CBE (Cash Breakeven)
-base_cbe = 24900
-reduction_per_qtr = 267
-steps = quarters[target_qtr]
-dynamic_cbe = base_cbe - (steps * reduction_per_qtr)
+        h1 { margin: 0; color: var(--accent); font-size: 1.4rem; letter-spacing: 1px; }
+        .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-top: 5px; }
 
-# --- 3. FLÅTE-MIKS (NYHET: Fastpris vs Spot) ---
-st.sidebar.header("Flåte Kontrakter")
+        /* RESPONSIV GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Standard: Mobil (1 kolonne) */
+            gap: 15px;
+        }
 
-# Slider for antall skip på fast kontrakt
-fixed_ships = st.sidebar.slider("Antall skip på Fastpris", 0, 12, 0)
-spot_ships = FLEET_COUNT - fixed_ships
+        /* Desktop Breakpoint */
+        @media (min-width: 1024px) {
+            .grid {
+                grid-template-columns: 350px 1fr 320px; /* 3 kolonner på stor skjerm */
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+        }
 
-# Hvis vi har skip på fastpris, vis felt for å skrive inn prisen
-fixed_rate = 0
-if fixed_ships > 0:
-    fixed_rate = st.sidebar.number_input(
-        f"Gjennomsnittlig Fastpris for {fixed_ships} skip ($/dag)", 
-        value=30000, 
-        step=500,
-        help="Total rate (TCE) for skipene som ikke går i spot-markedet."
-    )
+        .card {
+            background: var(--panel-color);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
 
-st.sidebar.markdown("---")
+        h2 { 
+            font-size: 0.9rem; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            border-bottom: 1px solid #334155; 
+            padding-bottom: 8px; 
+            margin-top: 0; 
+            margin-bottom: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
 
-# --- 4. SPOT MARKEDET ---
-# Initialiser session state for å huske tallene
-if 'hshp_bdi' not in st.session_state: st.session_state['hshp_bdi'] = 25000
-if 'hshp_prem' not in st.session_state: st.session_state['hshp_prem'] = 138
-if 'hshp_spread' not in st.session_state: st.session_state['hshp_spread'] = 120
+        /* KNAPPER (Finger-vennlige) */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
 
-st.sidebar.header("Spot Marked Drivere")
-bdi_5tc = st.sidebar.slider("Baltic Capesize Index (5TC)", 10000, 80000, key='hshp_bdi', step=500)
-premium_pct = st.sidebar.slider("Newcastlemax Premium (%)", 110, 160, key='hshp_prem', step=1) / 100
-fuel_spread = st.sidebar.slider("Fuel Spread (Hi5) $/ton", 0, 500, key='hshp_spread', step=10)
+        .tab-btn {
+            background: var(--panel-color);
+            border: 1px solid #334155;
+            color: var(--text-muted);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex: 1; /* Fyller bredden likt */
+            transition: all 0.2s;
+            text-align: center;
+        }
 
-# --- 5. BEREGNINGSMOTOR ---
+        .tab-btn.active-ffa { background: rgba(168, 85, 247, 0.2); border-color: var(--ffa-color); color: var(--ffa-color); }
+        .tab-btn.active-fund { background: rgba(245, 158, 11, 0.2); border-color: var(--fund-color); color: var(--fund-color); }
 
-# A. Beregn Spot Rate
-scrubber_bonus = fuel_spread * 45 
-spot_tce = (bdi_5tc * premium_pct) + scrubber_bonus
+        /* SLIDERS & INPUTS */
+        .control-group { margin-bottom: 18px; }
+        
+        .label-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 8px; 
+            font-size: 0.9rem; 
+            font-weight: 500; 
+        }
+        
+        .val-display { color: var(--accent); font-weight: 700; font-family: monospace; font-size: 1rem;}
 
-# B. Beregn Vektet Snitt Rate for hele flåten
-# (Spot Rate * Spot Skip) + (Fastpris * Fastpris Skip) / Totalt antall
-total_revenue_daily = (spot_tce * spot_ships) + (fixed_rate * fixed_ships)
-weighted_avg_tce = total_revenue_daily / FLEET_COUNT
+        input[type="range"] {
+            width: 100%;
+            height: 24px; /* Høyere touch area */
+            background: transparent;
+            appearance: none;
+            cursor: pointer;
+            margin: 0;
+        }
+        
+        /* Custom Slider Track & Thumb for Mobile */
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: #334155; height: 6px; border-radius: 3px;
+        }
+        input[type="range"]::-moz-range-track {
+            background: #334155; height: 6px; border-radius: 3px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none; margin-top: -7px;
+            width: 20px; height: 20px; 
+            border-radius: 50%; background: white; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        
+        .ffa-mode input::-webkit-slider-thumb { background: var(--ffa-color); }
+        .fund-mode input::-webkit-slider-thumb { background: var(--fund-color); }
 
-# C. Beregn Utbytte
-daily_margin = weighted_avg_tce - dynamic_cbe
-monthly_cash_flow = daily_margin * FLEET_COUNT * 30.42 # 365/12
-monthly_dps = max(0, monthly_cash_flow / SHARES_OUTSTANDING)
+        .info { font-size: 0.75rem; color: #64748b; margin-top: 4px; font-style: italic; }
 
-# --- 6. VISUALISERING AV FORMELEN (NYHET) ---
-st.markdown("### 🧮 Matematikken bak tallet")
+        /* RESULTATER */
+        .chart-container { 
+            position: relative; 
+            height: 250px; 
+            width: 100%; 
+            margin-bottom: 15px;
+        }
 
-# Vi lager en visuell ligning med LaTeX
-formula_latex = r'''
-\text{Utbytte} = \frac{(\text{Snitt Rate} - \text{CBE}) \times \text{Skip} \times \text{Dager}}{\text{Aksjer}}
-'''
-st.latex(formula_latex)
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
 
-st.caption("Med dine tall blir dette:")
+        .big-result {
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
 
-# Dynamisk visning av tallene
-calculation_latex = rf'''
-\text{{{monthly_dps:.3f}}} = \frac{{({weighted_avg_tce:,.0f} - {dynamic_cbe:,.0f}) \times {FLEET_COUNT} \times 30.4}}{{46.65 \text{{ mill}}}}
-'''
-st.latex(calculation_latex)
+        .rate-val { font-size: 1.4rem; font-weight: bold; color: white; margin-top: 5px;}
+        
+        /* UTBYTTE KORT (Gull) */
+        .dividend-card {
+            background: linear-gradient(145deg, rgba(251, 191, 36, 0.08) 0%, rgba(30, 41, 59, 1) 100%);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        .div-amount { font-size: 2.5rem; font-weight: 800; color: var(--gold); margin: 10px 0; letter-spacing: -1px; }
 
-st.divider()
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
 
-# --- 7. RAPPORT TIL DASHBOARD ---
-if 'projections' not in st.session_state: st.session_state['projections'] = {}
-st.session_state['projections']['Himalaya'] = monthly_dps * 3
+    <header>
+        <h1>HSHP Mobil Simulator</h1>
+        <div class="subtitle">FFA vs Fundamental Modell</div>
+    </header>
 
-# --- 8. RESULTAT DISPLAY ---
-col1, col2 = st.columns(2)
+    <div class="tabs">
+        <div class="tab-btn active-ffa" onclick="setMode('ffa')" id="btn-ffa">Metode 1<br><small>Marked (FFA)</small></div>
+        <div class="tab-btn" onclick="setMode('fund')" id="btn-fund">Metode 2<br><small>Egen Modell</small></div>
+    </div>
 
-# Viser Vektet Rate (Blend av spot og fast)
-col1.metric(
-    "Snitt Rate (Spot + Fast)", 
-    f"${weighted_avg_tce:,.0f}", 
-    f"Spot: ${spot_tce:,.0f} | Fast: ${fixed_rate:,.0f}" if fixed_ships > 0 else None
-)
+    <div class="grid">
+        
+        <div class="card" id="input-card">
+            <h2 id="input-title">FFA Rater (Marked)</h2>
+            
+            <div id="controls-ffa" class="ffa-mode">
+                <div class="control-group">
+                    <div class="label-row"><label>Q1 2026</label> <span class="val-display" id="val-q1">$18k</span></div>
+                    <input type="range" id="ffa-q1" min="10000" max="50000" step="500" value="18000">
+                </div>
+                <div class="control-group">
+                    <div class="label-row"><label>Q2 2026</label> <span class="val-display" id="val-q2">$26k</span></div>
+                    <input type="range" id="ffa-q2" min="10000" max="50000" step="500" value="26000">
+                </div>
+                <div class="control-group">
+                    <div class="label-row"><label>Q3 2026</label> <span class="val-display" id="val-q3">$35k</span></div>
+                    <input type="range" id="ffa-q3" min="10000" max="60000" step="500" value="35000">
+                </div>
+                <div class="control-group">
+                    <div class="label-row"><label>Q4 2026</label> <span class="val-display" id="val-q4">$32k</span></div>
+                    <input type="range" id="ffa-q4" min="10000" max="60000" step="500" value="32000">
+                </div>
+            </div>
 
-col2.metric(
-    "Est. Månedlig Utbytte", 
-    f"${monthly_dps:.3f}", 
-    f"Breakeven: ${dynamic_cbe:,.0f}"
-)
+            <div id="controls-fund" class="fund-mode hidden">
+                <div class="control-group">
+                    <div class="label-row"><label>Global Etterspørsel</label> <span class="val-display" id="val-demand">100</span></div>
+                    <input type="range" id="demand" min="90" max="110" step="0.5" value="100">
+                    <div class="info">100 = Normal vekst</div>
+                </div>
+                <div class="control-group">
+                    <div class="label-row"><label>Simandou (Guinea)</label> <span class="val-display" id="val-simvol">20 Mt</span></div>
+                    <input type="range" id="simvol" min="0" max="120" step="10" value="20">
+                </div>
+                <div class="control-group">
+                    <div class="label-row"><label>Netto Flåtevekst</label> <span class="val-display" id="val-growth">1.5%</span></div>
+                    <input type="range" id="growth" min="-2" max="5" step="0.1" value="1.5">
+                </div>
+                <div class="control-group">
+                    <div class="label-row"><label>Kø/Ineffektivitet</label> <span class="val-display" id="val-ineff">7.0%</span></div>
+                    <input type="range" id="inefficiency" min="0" max="15" step="0.5" value="7.0">
+                </div>
+            </div>
+        </div>
 
-# Info boks om miksen
-if fixed_ships > 0:
-    st.info(f"📊 **Hedge Profil:** Du har sikret **{fixed_ships} skip** på ${fixed_rate:,}/dag. De resterende **{spot_ships} skipene** tjener ${spot_tce:,.0f}/dag i spot-markedet.")
-else:
-    st.info("📊 **100% Spot Eksponering:** Hele flåten flyter på markedsraten.")
+        <div class="card">
+            <h2>Resultat</h2>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+            <div class="stats-grid">
+                <div class="big-result">
+                    <div style="font-size: 0.7em; color: var(--text-muted); text-transform:uppercase;">Cape 5TC</div>
+                    <div class="rate-val" id="res-cape">$28k</div>
+                    <div id="util-text" style="font-size: 0.7em; color: var(--gold); display:none;">93% Util</div>
+                </div>
+                <div class="big-result" style="border: 1px solid var(--accent);">
+                    <div style="font-size: 0.7em; color: var(--accent); text-transform:uppercase;">HSHP Rate</div>
+                    <div class="rate-val" id="res-hshp" style="color: var(--accent);">$42k</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card dividend-card">
+            <h2 style="border-color: rgba(251, 191, 36, 0.3); color: var(--gold);">Utbytte (Måned)</h2>
+            
+            <div class="control-group">
+                <div class="label-row"><label>HSHP Premie</label> <span class="val-display" id="val-prem">140%</span></div>
+                <input type="range" id="premium" min="120" max="160" step="1" value="140">
+            </div>
+            <div class="control-group">
+                <div class="label-row"><label>USD/NOK</label> <span class="val-display" id="val-fx">11.00</span></div>
+                <input type="range" id="fx" min="9.0" max="13.0" step="0.1" value="11.00">
+            </div>
+            <div class="control-group">
+                <div class="label-row"><label>Break-Even</label> <span class="val-display" id="val-be">$18k</span></div>
+                <input type="range" id="breakeven" min="15000" max="23000" step="500" value="18000">
+            </div>
+
+            <div style="text-align: center; margin-top: 15px;">
+                <div class="div-amount" id="res-div">NOK 2.15</div>
+                <div style="font-size: 0.9rem; color: #cbd5e1;">(USD <span id="res-div-usd">0.20</span>)</div>
+                <div style="border-top: 1px dashed rgba(251, 191, 36, 0.4); margin-top: 15px; padding-top: 10px;">
+                    <div style="font-size: 0.85rem; color: #94a3b8;">Årlig: <span id="res-yield" style="color: white; font-weight: bold;">NOK 25.80</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const SHIPS = 12;
+    const SHARES = 43900000;
+    let currentMode = 'ffa';
+    let myChart = null;
+
+    const inputs = {
+        ffaQ1: document.getElementById('ffa-q1'),
+        ffaQ2: document.getElementById('ffa-q2'),
+        ffaQ3: document.getElementById('ffa-q3'),
+        ffaQ4: document.getElementById('ffa-q4'),
+        demand: document.getElementById('demand'),
+        simvol: document.getElementById('simvol'),
+        growth: document.getElementById('growth'),
+        ineff: document.getElementById('inefficiency'),
+        be: document.getElementById('breakeven'),
+        prem: document.getElementById('premium'),
+        fx: document.getElementById('fx')
+    };
+
+    function getFundamentalRate(util) {
+        let rate = 10000;
+        if(util > 0.86) { rate += 1200 * Math.exp(38 * (util - 0.88)); }
+        return Math.min(rate, 200000);
+    }
+
+    function calculateUtil() {
+        const growth = parseFloat(inputs.growth.value);
+        const ineff = parseFloat(inputs.ineff.value);
+        const effectiveSupply = 100 * (1 + growth/100) * (1 - ineff/100);
+        const baseDemand = parseFloat(inputs.demand.value);
+        const simVol = parseFloat(inputs.simvol.value);
+        const simImpact = simVol * 0.05; 
+        const totalDemand = baseDemand + simImpact;
+        const calibration = 1.05; 
+        return (totalDemand / effectiveSupply) / calibration;
+    }
+
+    function update() {
+        let capeRate = 0;
+        let chartData = [];
+        let chartLabels = [];
+        let chartColor = '';
+
+        if (currentMode === 'ffa') {
+            const q1 = parseInt(inputs.ffaQ1.value);
+            const q2 = parseInt(inputs.ffaQ2.value);
+            const q3 = parseInt(inputs.ffaQ3.value);
+            const q4 = parseInt(inputs.ffaQ4.value);
+            capeRate = (q1 + q2 + q3 + q4) / 4;
+            chartLabels = ['Q1', 'Q2', 'Q3', 'Q4'];
+            chartData = [q1, q2, q3, q4];
+            chartColor = '#a855f7';
+            document.getElementById('util-text').style.display = 'none';
+        } else {
+            const util = calculateUtil();
+            const constrainedUtil = Math.max(0.70, Math.min(0.995, util));
+            capeRate = getFundamentalRate(constrainedUtil);
+            chartColor = '#f59e0b';
+            for(let i=85; i<=98; i+=1) {
+                chartLabels.push(i + '%');
+                chartData.push(getFundamentalRate(i/100));
+            }
+            const utilEl = document.getElementById('util-text');
+            utilEl.style.display = 'block';
+            utilEl.innerText = (constrainedUtil*100).toFixed(1) + "% Util";
+        }
+
+        const premPct = parseInt(inputs.prem.value) / 100;
+        const scrubber = 2500; // Fast estimat for mobilversjon for å spare plass
+        const be = parseInt(inputs.be.value);
+        const fx = parseFloat(inputs.fx.value);
+        const hshpRate = (capeRate * premPct) + scrubber;
+
+        let dailyProfit = hshpRate - be;
+        if (dailyProfit < 0) dailyProfit = 0;
+
+        const annualProfitUSD = dailyProfit * SHIPS * 365;
+        const perShareUSD = annualProfitUSD / SHARES;
+        const perShareNOK = perShareUSD * fx;
+        const monthlyNOK = perShareNOK / 12;
+
+        // UI Updates
+        document.getElementById('val-q1').innerText = '$' + (parseInt(inputs.ffaQ1.value)/1000).toFixed(1) + 'k';
+        document.getElementById('val-q2').innerText = '$' + (parseInt(inputs.ffaQ2.value)/1000).toFixed(1) + 'k';
+        document.getElementById('val-q3').innerText = '$' + (parseInt(inputs.ffaQ3.value)/1000).toFixed(1) + 'k';
+        document.getElementById('val-q4').innerText = '$' + (parseInt(inputs.ffaQ4.value)/1000).toFixed(1) + 'k';
+        
+        document.getElementById('val-demand').innerText = inputs.demand.value;
+        document.getElementById('val-simvol').innerText = inputs.simvol.value + ' Mt';
+        document.getElementById('val-growth').innerText = inputs.growth.value + '%';
+        document.getElementById('val-ineff').innerText = inputs.ineff.value + '%';
+        
+        document.getElementById('val-be').innerText = '$' + (parseInt(inputs.be.value)/1000).toFixed(1) + 'k';
+        document.getElementById('val-prem').innerText = inputs.prem.value + '%';
+        document.getElementById('val-fx').innerText = inputs.fx.value;
+
+        document.getElementById('res-cape').innerText = '$' + Math.round(capeRate/1000) + 'k';
+        document.getElementById('res-hshp').innerText = '$' + Math.round(hshpRate/1000) + 'k';
+        
+        document.getElementById('res-div').innerText = 'kr ' + monthlyNOK.toFixed(2);
+        document.getElementById('res-div-usd').innerText = (monthlyNOK / fx).toFixed(2);
+        document.getElementById('res-yield').innerText = 'kr ' + perShareNOK.toFixed(2);
+
+        updateChart(chartLabels, chartData, chartColor);
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{ label: 'Rate', data: [], backgroundColor: '#a855f7', borderRadius: 4 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', callback: v => v/1000 + 'k' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                }
+            }
+        });
+    }
+
+    function updateChart(labels, data, color) {
+        myChart.data.labels = labels;
+        myChart.data.datasets[0].data = data;
+        myChart.data.datasets[0].backgroundColor = color;
+        if(currentMode === 'ffa') { myChart.config.type = 'bar'; } 
+        else { myChart.config.type = 'line'; myChart.data.datasets[0].borderColor = color; }
+        myChart.update();
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        const ffa = document.getElementById('controls-ffa');
+        const fund = document.getElementById('controls-fund');
+        const bFfa = document.getElementById('btn-ffa');
+        const bFund = document.getElementById('btn-fund');
+        const title = document.getElementById('input-title');
+
+        if (mode === 'ffa') {
+            ffa.classList.remove('hidden'); fund.classList.add('hidden');
+            bFfa.className = 'tab-btn active-ffa'; bFund.className = 'tab-btn';
+            title.innerText = "FFA Rater"; title.style.color = "var(--ffa-color)";
+        } else {
+            ffa.classList.add('hidden'); fund.classList.remove('hidden');
+            bFfa.className = 'tab-btn'; bFund.className = 'tab-btn active-fund';
+            title.innerText = "Tilbud/Etterspørsel"; title.style.color = "var(--fund-color)";
+        }
+        update();
+    }
+
+    Object.values(inputs).forEach(input => input.addEventListener('input', update));
+    window.onload = function() { initChart(); update(); };
+</script>
+</body>
+</html>
