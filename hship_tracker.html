@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>HSHP Intelligence v19 - IMO Correction</title>
+    <title>HSHP Intelligence v20 - Fleet Corrections Final</title>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 25px; }
@@ -15,7 +15,7 @@
         .btn-save { background: #38bdf8; color: #0f172a; width: 100%; margin-top: 15px; padding: 12px; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         h3 { color: #38bdf8; margin: 0 0 15px 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         
         .info-box { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #38bdf8; }
@@ -32,8 +32,10 @@
         textarea { width: 100%; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 10px; box-sizing: border-box; margin-top: 5px; font-family: inherit; font-size: 0.85em; }
         .notes-area { height: 60px; }
         .input-area { height: 40px; }
-        .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.75em; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 5px; float: right; }
+        .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.75em; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 5px; float: right; transition: 0.2s; }
+        .mt-link:hover { background: #38bdf8; color: #0f172a; }
 
+        /* PRINT STYLES */
         @media print {
             body { background-color: white; color: black; padding: 0; }
             .btn, .mt-link, textarea, .input-area, .btn-group, .header button { display: none !important; }
@@ -43,14 +45,16 @@
             .status-tag { border: 1px solid black; color: black !important; background: transparent !important; }
             h1 { color: black; text-align: center; }
             .print-only { display: block !important; }
+            .print-notes { display: block !important; margin-top: 10px; font-style: italic; }
         }
         .print-only { display: none; margin-bottom: 20px; padding: 20px; border: 2px solid #334155; border-radius: 8px; }
+        .print-notes { display: none; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>🚢 HSHP Intelligence v19</h1>
+        <h1>🚢 HSHP Intelligence v20</h1>
         <div class="btn-group">
             <button class="btn btn-report" onclick="generateReport()">Generer Rapport (PDF)</button>
             <button class="btn btn-clear" onclick="clearAll()">Slett data</button>
@@ -68,8 +72,8 @@
         const shipData = [
             { name: "Mount Norefjell", imo: "9939008" }, 
             { name: "Mount Ita", imo: "9939967" },
-            { name: "Mount Etna", imo: "9939979" }, // KORRIGERT IMO
-            { name: "Mount Blanc", imo: "9945617" },
+            { name: "Mount Etna", imo: "9939979" },
+            { name: "Mount Blanc", imo: "9939981" }, // KORRIGERT IMO
             { name: "Mount Matterhorn", imo: "9945629" }, 
             { name: "Mount Neblina", imo: "9945631" },
             { name: "Mount Bandeira", imo: "9945643" }, 
