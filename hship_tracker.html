@@ -2,7 +2,7 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>HSHP Intelligence v22 - Relative Time</title>
+    <title>HSHP Intelligence v24 - Verification Edition</title>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 25px; }
@@ -32,7 +32,9 @@
         
         textarea { width: 100%; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 10px; box-sizing: border-box; margin-top: 5px; font-family: inherit; font-size: 0.85em; }
         .notes-area { height: 60px; }
-        .input-area { height: 40px; }
+        .input-area { height: 65px; font-size: 0.8em; } 
+        textarea::placeholder { color: #64748b; font-style: italic; }
+
         .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.75em; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 5px; float: right; }
 
         @media print {
@@ -51,7 +53,7 @@
 <body>
 
     <div class="header">
-        <h1>🚢 HSHP Intelligence v22</h1>
+        <h1>🚢 HSHP Intelligence v24</h1>
         <div class="btn-group">
             <button class="btn btn-report" onclick="generateReport()">Generer Rapport (PDF)</button>
             <button class="btn btn-clear" onclick="clearAll()">Slett data</button>
@@ -87,7 +89,6 @@
             const past = new Date(timestamp);
             const diffTime = Math.abs(now - past);
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            
             if (diffDays === 0) return "i dag";
             if (diffDays === 1) return "1 dag siden siste oppdatering";
             return `${diffDays} dager siden siste oppdatering`;
@@ -105,7 +106,6 @@
 
                 const isChinaDeparture = data.dep && (data.dep.toLowerCase().includes("cn"));
                 const potentialOldData = isChinaDeparture && drValue > 15;
-
                 const relativeTime = getRelativeTimeString(data.ts);
 
                 container.innerHTML += `
@@ -120,7 +120,8 @@
                             ${potentialOldData ? '<span class="alert">⚠️ Mulig utdaterte data</span>' : ''}
                         </div>
                         <textarea id="x-${ship.name}" class="notes-area" placeholder="Notater...">${data.x || ''}</textarea>
-                        <textarea id="mt-${ship.name}" class="input-area" placeholder="Lim inn rådata her..."></textarea>
+                        <textarea id="mt-${ship.name}" class="input-area" 
+                        placeholder="Lim inn rådata (PC: CTRL+A, CTRL+C, CTRL+V | Mac: Cmd+A, Cmd+C, Cmd+V)"></textarea>
                         <button class="btn btn-save" onclick="save('${ship.name}')">Lagre Status</button>
                     </div>
                 `;
@@ -130,6 +131,20 @@
         window.save = function(name) {
             const mtText = document.getElementById('mt-'+name).value;
             const xText = document.getElementById('x-'+name).value;
+            
+            // --- VERIFIKASJONS-SJEKK ---
+            if (mtText) {
+                const upperText = mtText.toUpperCase();
+                // Sjekker om teksten inneholder et av de ANDRE skipenes navn
+                const foundOtherShip = shipData.find(s => s.name !== name && upperText.includes(s.name.toUpperCase()));
+                
+                if (foundOtherShip) {
+                    const confirmSave = confirm(`⚠️ ADVARSEL: Navne-mismatch!\n\nDu prøver å lagre data som ser ut til å tilhøre "${foundOtherShip.name}" i ruten for "${name}".\n\nVil du fortsette likevel?`);
+                    if (!confirmSave) return; // Avbryt lagring
+                }
+            }
+            // ---------------------------
+
             let current = JSON.parse(localStorage.getItem(name)) || { dep: '-', arr: '-', eta: '-', dr: '-', x: '', updated: '-', ts: null };
             
             if (mtText) {
@@ -143,7 +158,7 @@
             }
             
             current.x = xText;
-            current.ts = Date.now(); // Lagrer rått tidsstempel for kalkulering
+            current.ts = Date.now();
             current.updated = new Date().toLocaleString('no-NO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
             localStorage.setItem(name, JSON.stringify(current));
             draw();
