@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSHP Ruteanalyse</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #f1f5f9; padding: 20px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 25px; }
+        h1 { color: #38bdf8; margin: 0; font-size: 1.5rem; }
+        h2 { color: #94a3b8; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 15px 0; }
+        .btn { border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-back    { background: #334155; color: #f1f5f9; }
+        .btn-export  { background: #10b981; color: white; }
+        .btn-group   { display: flex; gap: 10px; }
+
+        .section { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+
+        /* Sammendrag-kort */
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+        .stat-card { background: #0f172a; border-radius: 8px; padding: 14px; text-align: center; }
+        .stat-val  { font-size: 2rem; font-weight: bold; color: #38bdf8; }
+        .stat-lbl  { font-size: 0.75em; color: #64748b; text-transform: uppercase; margin-top: 4px; }
+
+        /* Rutefrekvens */
+        .route-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .route-table th { color: #64748b; text-align: left; padding: 6px 10px; border-bottom: 1px solid #334155; font-weight: normal; text-transform: uppercase; font-size: 0.78em; }
+        .route-table td { padding: 8px 10px; border-bottom: 1px solid #1e293b; }
+        .route-table tr:hover td { background: #0f172a; }
+        .bar { background: #334155; border-radius: 4px; height: 8px; margin-top: 4px; }
+        .bar-fill { background: #38bdf8; border-radius: 4px; height: 8px; }
+        .tag { font-size: 0.7em; padding: 2px 7px; border-radius: 4px; font-weight: bold; }
+        .tag-full    { background: #059669; color: white; }
+        .tag-partial { background: #d97706; color: white; }
+        .tag-empty   { background: #475569; color: white; }
+
+        /* Skipshistorikk */
+        .ship-select { background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 8px 12px; font-size: 0.9em; width: 100%; margin-bottom: 15px; }
+        .hist-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        .hist-table th { color: #64748b; text-align: left; padding: 6px 10px; border-bottom: 1px solid #334155; font-weight: normal; text-transform: uppercase; font-size: 0.75em; }
+        .hist-table td { padding: 7px 10px; border-bottom: 1px solid #1a2640; }
+        .hist-table tr:hover td { background: #0f172a; }
+        .no-data { color: #475569; font-style: italic; text-align: center; padding: 30px; }
+
+        /* Lastefaktor-tidslinje */
+        .timeline { display: flex; flex-direction: column; gap: 6px; }
+        .tl-row { display: flex; align-items: center; gap: 10px; font-size: 0.8em; }
+        .tl-date { color: #64748b; width: 130px; flex-shrink: 0; }
+        .tl-bar-wrap { flex: 1; display: flex; gap: 2px; height: 18px; }
+        .tl-seg { border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 0.65em; font-weight: bold; color: white; overflow: hidden; }
+        .tl-full    { background: #059669; }
+        .tl-partial { background: #d97706; }
+        .tl-empty   { background: #334155; }
+        .tl-legend { display: flex; gap: 15px; margin-top: 10px; font-size: 0.78em; color: #94a3b8; }
+        .tl-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>📊 HSHP Ruteanalyse</h1>
+    <div class="btn-group">
+        <button class="btn btn-export" onclick="exportJSON()">Eksporter JSON</button>
+        <button class="btn btn-back" onclick="window.location.href='hship_tracker.html'">← Tilbake til tracker</button>
+    </div>
+</div>
+
+<!-- Sammendrag -->
+<div class="section">
+    <h2>Flåteoversikt</h2>
+    <div class="stat-grid" id="statGrid"></div>
+</div>
+
+<!-- Rutefrekvens -->
+<div class="section">
+    <h2>Hyppigste ruter (alle skip)</h2>
+    <table class="route-table" id="routeTable">
+        <thead><tr><th>Rute</th><th>Antall</th><th>Last snitt</th><th>Frekvens</th></tr></thead>
+        <tbody id="routeBody"></tbody>
+    </table>
+</div>
+
+<!-- Lastefaktor over tid -->
+<div class="section">
+    <h2>Lastefaktor per registrering</h2>
+    <div class="timeline" id="timeline"></div>
+    <div class="tl-legend">
+        <span><span class="tl-dot" style="background:#059669"></span>Fullastet</span>
+        <span><span class="tl-dot" style="background:#d97706"></span>Begrenset</span>
+        <span><span class="tl-dot" style="background:#334155"></span>Tom</span>
+    </div>
+    <p id="timelineEmpty" class="no-data" style="display:none">Ikke nok historikk ennå — registrer flåten flere ganger over tid.</p>
+</div>
+
+<!-- Skipshistorikk -->
+<div class="section">
+    <h2>Historikk per skip</h2>
+    <select class="ship-select" id="shipSelect" onchange="drawShipHistory()"></select>
+    <div id="shipHistContent"></div>
+</div>
+
+<script>
+    const shipNames = [
+        "Mount Norefjell","Mount Ita","Mount Etna","Mount Blanc",
+        "Mount Matterhorn","Mount Neblina","Mount Bandeira","Mount Hua",
+        "Mount Elbrus","Mount Emai","Mount Denali","Mount Aconcagua"
+    ];
+
+    function loadAll() {
+        return shipNames.map(name => {
+            const d = JSON.parse(localStorage.getItem(name)) || { dep:'-', arr:'-', dr:'-', eta:'-', ts:null, history:[] };
+            if (!Array.isArray(d.history)) d.history = [];
+            return { name, ...d };
+        });
+    }
+
+    function getStatus(dr) {
+        const d = parseFloat(dr) || 0;
+        if (d > 17)  return { label:'FULL',    cls:'full' };
+        if (d >= 14) return { label:'BEGR.',    cls:'partial' };
+        return           { label:'TOM',     cls:'empty' };
+    }
+
+    function fmtDate(ts) {
+        if (!ts) return '-';
+        return new Date(ts).toLocaleString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+
+    // --- Sammendrag ---
+    function drawStats(ships) {
+        let full=0, partial=0, empty=0, totalHistory=0;
+        ships.forEach(s => {
+            const st = getStatus(s.dr);
+            if (st.cls==='full') full++;
+            else if (st.cls==='partial') partial++;
+            else empty++;
+            totalHistory += s.history.length;
+        });
+        document.getElementById('statGrid').innerHTML = `
+            <div class="stat-card"><div class="stat-val" style="color:#10b981">${full}</div><div class="stat-lbl">Fullastet nå</div></div>
+            <div class="stat-card"><div class="stat-val" style="color:#f59e0b">${partial}</div><div class="stat-lbl">Begrenset nå</div></div>
+            <div class="stat-card"><div class="stat-val" style="color:#64748b">${empty}</div><div class="stat-lbl">Tom nå</div></div>
+            <div class="stat-card"><div class="stat-val">${totalHistory}</div><div class="stat-lbl">Loggede bevegelser</div></div>
+        `;
+    }
+
+    // --- Rutefrekvens ---
+    function drawRoutes(ships) {
+        const freq = {};
+        ships.forEach(s => {
+            // Tell nåværende posisjon
+            if (s.dep && s.dep !== '-' && s.arr && s.arr !== '-') {
+                const key = `${s.dep} → ${s.arr}`;
+                if (!freq[key]) freq[key] = { count:0, drSum:0, drCount:0 };
+                freq[key].count++;
+                const dr = parseFloat(s.dr);
+                if (!isNaN(dr)) { freq[key].drSum += dr; freq[key].drCount++; }
+            }
+            // Tell historikk
+            s.history.forEach(h => {
+                if (h.dep && h.dep !== '-' && h.arr && h.arr !== '-') {
+                    const key = `${h.dep} → ${h.arr}`;
+                    if (!freq[key]) freq[key] = { count:0, drSum:0, drCount:0 };
+                    freq[key].count++;
+                    const dr = parseFloat(h.dr);
+                    if (!isNaN(dr)) { freq[key].drSum += dr; freq[key].drCount++; }
+                }
+            });
+        });
+
+        const sorted = Object.entries(freq).sort((a,b) => b[1].count - a[1].count);
+        const maxCount = sorted[0]?.[1].count || 1;
+
+        const tbody = document.getElementById('routeBody');
+        if (sorted.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="no-data">Ingen rutedata ennå.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = sorted.map(([route, v]) => {
+            const avgDr = v.drCount ? (v.drSum / v.drCount).toFixed(1) : '-';
+            const st = avgDr !== '-' ? getStatus(avgDr) : { label:'-', cls:'empty' };
+            const pct = Math.round((v.count / maxCount) * 100);
+            return `<tr>
+                <td><b>${route}</b></td>
+                <td>${v.count}</td>
+                <td>${avgDr} m &nbsp;<span class="tag tag-${st.cls}">${st.label}</span></td>
+                <td style="min-width:120px">
+                    <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    // --- Lastefaktor-tidslinje ---
+    // Bygger snapshots ved å gruppere alle history-entries på dato
+    function drawTimeline(ships) {
+        // Samle alle entries med timestamp
+        const entries = [];
+        ships.forEach(s => {
+            if (s.ts) entries.push({ name: s.name, dr: s.dr, ts: s.ts });
+            s.history.forEach(h => {
+                if (h.ts) entries.push({ name: s.name, dr: h.dr, ts: h.ts });
+            });
+        });
+
+        if (entries.length < 12) {
+            document.getElementById('timeline').style.display = 'none';
+            document.getElementById('timelineEmpty').style.display = 'block';
+            return;
+        }
+
+        // Grupper per dag
+        const byDay = {};
+        entries.forEach(e => {
+            const day = new Date(e.ts).toLocaleDateString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric' });
+            if (!byDay[day]) byDay[day] = {};
+            byDay[day][e.name] = e.dr; // siste registrering den dagen vinner
+        });
+
+        const days = Object.keys(byDay).sort((a,b) => {
+            const parse = s => { const [d,m,y] = s.split('.'); return new Date(y,m-1,d); };
+            return parse(a) - parse(b);
+        }).slice(-20); // vis siste 20 dager
+
+        const tl = document.getElementById('timeline');
+        tl.innerHTML = days.map(day => {
+            const snap = byDay[day];
+            let full=0, partial=0, empty=0;
+            shipNames.forEach(name => {
+                if (snap[name] !== undefined) {
+                    const st = getStatus(snap[name]);
+                    if (st.cls==='full') full++;
+                    else if (st.cls==='partial') partial++;
+                    else empty++;
+                }
+            });
+            const total = full + partial + empty || 1;
+            return `<div class="tl-row">
+                <div class="tl-date">${day}</div>
+                <div class="tl-bar-wrap">
+                    <div class="tl-seg tl-full"    style="flex:${full}">${full>0?full:''}</div>
+                    <div class="tl-seg tl-partial"  style="flex:${partial}">${partial>0?partial:''}</div>
+                    <div class="tl-seg tl-empty"    style="flex:${empty}">${empty>0?empty:''}</div>
+                </div>
+                <div style="color:#64748b;font-size:0.75em;width:60px">${Math.round(full/total*100)}% full</div>
+            </div>`;
+        }).join('');
+    }
+
+    // --- Skipshistorikk ---
+    function populateShipSelect() {
+        const sel = document.getElementById('shipSelect');
+        sel.innerHTML = shipNames.map(n => `<option value="${n}">${n}</option>`).join('');
+    }
+
+    window.drawShipHistory = function() {
+        const name = document.getElementById('shipSelect').value;
+        const data = JSON.parse(localStorage.getItem(name)) || { dep:'-', arr:'-', dr:'-', eta:'-', ts:null, history:[] };
+        if (!Array.isArray(data.history)) data.history = [];
+
+        const all = [];
+        if (data.ts) all.push({ dep:data.dep, arr:data.arr, dr:data.dr, eta:data.eta, ts:data.ts, updated:data.updated });
+        [...data.history].reverse().forEach(h => all.push(h));
+
+        const el = document.getElementById('shipHistContent');
+        if (all.length === 0) {
+            el.innerHTML = '<p class="no-data">Ingen historikk registrert for dette skipet ennå.</p>';
+            return;
+        }
+
+        el.innerHTML = `<table class="hist-table">
+            <thead><tr><th>Tidspunkt</th><th>Fra</th><th>Til</th><th>Dypgang</th><th>Status</th></tr></thead>
+            <tbody>${all.map((h,i) => {
+                const st = getStatus(h.dr);
+                const rowStyle = i === 0 ? 'color:#f1f5f9;font-weight:500' : 'color:#94a3b8';
+                return `<tr style="${rowStyle}">
+                    <td>${fmtDate(h.ts)}</td>
+                    <td>${h.dep || '-'}</td>
+                    <td>${h.arr || '-'}</td>
+                    <td>${h.dr || '-'} m</td>
+                    <td><span class="tag tag-${st.cls}">${st.label}</span></td>
+                </tr>`;
+            }).join('')}</tbody>
+        </table>`;
+    };
+
+    // --- Eksport ---
+    window.exportJSON = function() {
+        const data = {};
+        shipNames.forEach(name => {
+            data[name] = JSON.parse(localStorage.getItem(name)) || {};
+        });
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `hshp_data_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+    };
+
+    // --- Init ---
+    const ships = loadAll();
+    drawStats(ships);
+    drawRoutes(ships);
+    drawTimeline(ships);
+    populateShipSelect();
+    drawShipHistory();
+</script>
+</body>
+</html>

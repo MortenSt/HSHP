@@ -2,112 +2,136 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <title>HSHP Intelligence v24 - Verification Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSHP Intelligence v25</title>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px; margin-bottom: 25px; }
         h1 { color: #38bdf8; margin: 0; font-size: 1.5rem; }
-        
         .btn-group { display: flex; gap: 10px; }
         .btn { border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-clear { background: #ef4444; color: white; }
         .btn-report { background: #10b981; color: white; }
+        .btn-analysis { background: #8b5cf6; color: white; }
         .btn-save { background: #38bdf8; color: #0f172a; width: 100%; margin-top: 15px; padding: 12px; }
-
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
         .card { background: #1e293b; padding: 20px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         h3 { color: #38bdf8; margin: 0 0 15px 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        
         .info-box { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #38bdf8; }
         .info-line { margin-bottom: 8px; font-size: 0.95em; }
         .label-text { color: #94a3b8; font-size: 0.8em; font-weight: bold; text-transform: uppercase; margin-right: 10px; }
-        
         .status-tag { font-size: 0.7em; padding: 2px 6px; border-radius: 4px; margin-left: 5px; font-weight: bold; }
         .full { background: #059669; color: white; }
         .partial { background: #d97706; color: white; }
         .empty { background: #475569; color: white; }
-        
         .updated-text { font-size: 0.75em; color: #38bdf8; margin-top: 10px; display: block; font-weight: 500; }
+        .history-count { font-size: 0.7em; color: #64748b; margin-top: 4px; display: block; }
         .alert { background: #7f1d1d; color: #fecaca; font-size: 0.75em; padding: 8px; border-radius: 4px; margin-top: 10px; display: block; border-left: 4px solid #ef4444; }
-        
         textarea { width: 100%; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 10px; box-sizing: border-box; margin-top: 5px; font-family: inherit; font-size: 0.85em; }
         .notes-area { height: 60px; }
-        .input-area { height: 65px; font-size: 0.8em; } 
+        .input-area { height: 65px; font-size: 0.8em; }
         textarea::placeholder { color: #64748b; font-style: italic; }
-
         .mt-link { color: #38bdf8; text-decoration: none; font-size: 0.75em; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 5px; float: right; }
-
+        .summary-bar { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 15px 20px; margin-bottom: 25px; display: flex; gap: 30px; align-items: center; flex-wrap: wrap; }
+        .summary-stat { text-align: center; }
+        .summary-stat .val { font-size: 1.8rem; font-weight: bold; }
+        .summary-stat .lbl { font-size: 0.75em; color: #94a3b8; text-transform: uppercase; }
+        .val-full { color: #10b981; }
+        .val-partial { color: #f59e0b; }
+        .val-empty { color: #64748b; }
+        .val-total { color: #38bdf8; }
+        .print-header { display: none; }
         @media print {
             body { background-color: white; color: black; padding: 0; }
-            .btn, .mt-link, textarea, .input-area, .btn-group, .header button { display: none !important; }
+            .btn, .mt-link, textarea, .input-area, .btn-group, .header button, .summary-bar { display: none !important; }
+            .print-header { display: block; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+            .print-header h1 { color: black; font-size: 1.3rem; margin: 0 0 4px 0; }
+            .print-header .print-ts { font-size: 0.85em; color: #555; }
             .grid { display: block; }
             .card { border: none; border-bottom: 1px solid #ccc; margin-bottom: 20px; page-break-inside: avoid; background: white; }
             h3, .info-box { color: black !important; background: white !important; border: 1px solid #eee; }
             .status-tag { border: 1px solid black; color: black !important; background: transparent !important; }
-            h1 { color: black; text-align: center; }
-            .print-only { display: block !important; }
+            h1 { display: none; }
         }
-        .print-only { display: none; margin-bottom: 20px; padding: 20px; border: 2px solid #334155; border-radius: 8px; }
     </style>
 </head>
 <body>
-
     <div class="header">
-        <h1>🚢 HSHP Intelligence v24</h1>
+        <h1>🚢 HSHP Intelligence v25</h1>
         <div class="btn-group">
+            <button class="btn btn-analysis" onclick="window.open('hship_analysis.html','_blank')">Analyser historikk ↗</button>
             <button class="btn btn-report" onclick="generateReport()">Generer Rapport (PDF)</button>
             <button class="btn btn-clear" onclick="clearAll()">Slett data</button>
         </div>
     </div>
 
-    <div id="reportSummary" class="print-only">
-        <h2>Flåteoppsummering - <span id="reportDate"></span></h2>
-        <div id="statsSummary"></div>
-    </div>
-    
-    <div class="grid" id="container"></div>
+    <div id="summary" class="summary-bar"></div>
+    <div id="container" class="grid"></div>
 
     <script>
         const shipData = [
-            { name: "Mount Norefjell", imo: "9939008" }, 
-            { name: "Mount Ita", imo: "9939967" },
-            { name: "Mount Etna", imo: "9939979" },
-            { name: "Mount Blanc", imo: "9939981" },
-            { name: "Mount Matterhorn", imo: "9945629" }, 
-            { name: "Mount Neblina", imo: "9945631" },
-            { name: "Mount Bandeira", imo: "9945643" }, 
-            { name: "Mount Hua", imo: "9945655" },
-            { name: "Mount Elbrus", imo: "9945667" }, 
-            { name: "Mount Emai", imo: "9945679" },
-            { name: "Mount Denali", imo: "9945681" }, 
+            { name: "Mount Norefjell", imo: "9939008" },
+            { name: "Mount Ita",       imo: "9939967" },
+            { name: "Mount Etna",      imo: "9939979" },
+            { name: "Mount Blanc",     imo: "9939981" },
+            { name: "Mount Matterhorn",imo: "9945629" },
+            { name: "Mount Neblina",   imo: "9945631" },
+            { name: "Mount Bandeira",  imo: "9945643" },
+            { name: "Mount Hua",       imo: "9945655" },
+            { name: "Mount Elbrus",    imo: "9945667" },
+            { name: "Mount Emai",      imo: "9945679" },
+            { name: "Mount Denali",    imo: "9945681" },
             { name: "Mount Aconcagua", imo: "9945693" }
         ];
+
+        const MAX_HISTORY = 100;
+
+        function getStatus(dr) {
+            const d = parseFloat(dr) || 0;
+            if (d > 17)  return { label: "FULL",          cls: "full" };
+            if (d >= 14) return { label: "LASTET (Begr.)", cls: "partial" };
+            return           { label: "TOM",           cls: "empty" };
+        }
 
         function getRelativeTimeString(timestamp) {
             if (!timestamp) return "Aldri";
             const now = new Date();
-            const past = new Date(timestamp);
-            const diffTime = Math.abs(now - past);
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = Math.floor(Math.abs(now - new Date(timestamp)) / 86400000);
             if (diffDays === 0) return "i dag";
-            if (diffDays === 1) return "1 dag siden siste oppdatering";
-            return `${diffDays} dager siden siste oppdatering`;
+            if (diffDays === 1) return "1 dag siden";
+            return `${diffDays} dager siden`;
+        }
+
+        function drawSummary() {
+            let full = 0, partial = 0, empty = 0;
+            shipData.forEach(ship => {
+                const d = JSON.parse(localStorage.getItem(ship.name)) || {};
+                const st = getStatus(d.dr || 0);
+                if (st.cls === 'full') full++;
+                else if (st.cls === 'partial') partial++;
+                else empty++;
+            });
+            document.getElementById('summary').innerHTML = `
+                <div class="summary-stat"><div class="val val-total">12</div><div class="lbl">Skip totalt</div></div>
+                <div class="summary-stat"><div class="val val-full">${full}</div><div class="lbl">Fullastet</div></div>
+                <div class="summary-stat"><div class="val val-partial">${partial}</div><div class="lbl">Begrenset</div></div>
+                <div class="summary-stat"><div class="val val-empty">${empty}</div><div class="lbl">Tom</div></div>
+                <div class="summary-stat" style="margin-left:auto;font-size:0.8em;color:#64748b;">
+                    Sist oppdatert: ${new Date().toLocaleString('no-NO',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+                </div>
+            `;
         }
 
         function draw() {
+            drawSummary();
             const container = document.getElementById('container');
             container.innerHTML = '';
             shipData.forEach(ship => {
-                const data = JSON.parse(localStorage.getItem(ship.name)) || { dep: '-', arr: '-', eta: '-', dr: '-', x: '', updated: '-', ts: null };
-                const drValue = parseFloat(data.dr) || 0;
-                let sL = "TOM", sC = "empty";
-                if (drValue > 17) { sL = "FULL"; sC = "full"; }
-                else if (drValue >= 14) { sL = "LASTET (Begr.)"; sC = "partial"; }
-
-                const isChinaDeparture = data.dep && (data.dep.toLowerCase().includes("cn"));
-                const potentialOldData = isChinaDeparture && drValue > 15;
-                const relativeTime = getRelativeTimeString(data.ts);
-
+                const data = JSON.parse(localStorage.getItem(ship.name)) || { dep:'-', arr:'-', eta:'-', dr:'-', x:'', updated:'-', ts:null, history:[] };
+                const st = getStatus(data.dr);
+                const histLen = (data.history || []).length;
+                const isChinaDeparture = data.dep && data.dep.toLowerCase().includes("cn");
+                const potentialOldData = isChinaDeparture && parseFloat(data.dr) > 15;
                 container.innerHTML += `
                     <div class="card">
                         <a href="https://www.marinetraffic.com/en/ais/details/ships/imo:${ship.imo}" target="_blank" class="mt-link">MT ↗</a>
@@ -115,13 +139,13 @@
                         <div class="info-box">
                             <div class="info-line"><span class="label-text">RUTE:</span> <b>${data.dep} ➔ ${data.arr}</b></div>
                             <div class="info-line"><span class="label-text">ETA:</span> <b>${data.eta}</b></div>
-                            <div class="info-line"><span class="label-text">DYP:</span> <b>${data.dr} m</b> <span class="status-tag ${sC}">${sL}</span></div>
-                            <span class="updated-text">OPPDATERT: ${relativeTime} (${data.updated})</span>
+                            <div class="info-line"><span class="label-text">DYP:</span> <b>${data.dr} m</b> <span class="status-tag ${st.cls}">${st.label}</span></div>
+                            <span class="updated-text">OPPDATERT: ${getRelativeTimeString(data.ts)} (${data.updated})</span>
+                            <span class="history-count">📋 ${histLen} loggede bevegelser</span>
                             ${potentialOldData ? '<span class="alert">⚠️ Mulig utdaterte data</span>' : ''}
                         </div>
                         <textarea id="x-${ship.name}" class="notes-area" placeholder="Notater...">${data.x || ''}</textarea>
-                        <textarea id="mt-${ship.name}" class="input-area" 
-                        placeholder="Lim inn rådata (PC: CTRL+A, CTRL+C, CTRL+V | Mac: Cmd+A, Cmd+C, Cmd+V)"></textarea>
+                        <textarea id="mt-${ship.name}" class="input-area" placeholder="Lim inn rådata fra MarineTraffic..."></textarea>
                         <button class="btn btn-save" onclick="save('${ship.name}')">Lagre Status</button>
                     </div>
                 `;
@@ -129,56 +153,104 @@
         }
 
         window.save = function(name) {
-            const mtText = document.getElementById('mt-'+name).value;
-            const xText = document.getElementById('x-'+name).value;
-            
-            // --- VERIFIKASJONS-SJEKK ---
+            const mtText = document.getElementById('mt-' + name).value;
+            const xText  = document.getElementById('x-'  + name).value;
+
             if (mtText) {
                 const upperText = mtText.toUpperCase();
-                // Sjekker om teksten inneholder et av de ANDRE skipenes navn
                 const foundOtherShip = shipData.find(s => s.name !== name && upperText.includes(s.name.toUpperCase()));
-                
                 if (foundOtherShip) {
-                    const confirmSave = confirm(`⚠️ ADVARSEL: Navne-mismatch!\n\nDu prøver å lagre data som ser ut til å tilhøre "${foundOtherShip.name}" i ruten for "${name}".\n\nVil du fortsette likevel?`);
-                    if (!confirmSave) return; // Avbryt lagring
+                    const ok = confirm(`⚠️ ADVARSEL: Navne-mismatch!\n\nDataene ser ut til å tilhøre "${foundOtherShip.name}".\n\nVil du fortsette likevel?`);
+                    if (!ok) return;
                 }
             }
-            // ---------------------------
 
-            let current = JSON.parse(localStorage.getItem(name)) || { dep: '-', arr: '-', eta: '-', dr: '-', x: '', updated: '-', ts: null };
-            
+            let current = JSON.parse(localStorage.getItem(name)) || { dep:'-', arr:'-', eta:'-', dr:'-', x:'', updated:'-', ts:null, history:[] };
+            if (!Array.isArray(current.history)) current.history = [];
+
             if (mtText) {
-                const drM = mtText.match(/Draught\s*[:\s]*([\d\.]+)\s*m/i);
-                const etaM = mtText.match(/Reported ETA\s*[:\s]*([\d\-\s:\(\)\+UTC]+)/i);
-                const ataM = mtText.match(/Actual time of arrival\s*[:\s]*([\d\-\s:\(\)\+UTC]+)/i);
-                if (drM) current.dr = drM[1];
-                if (etaM) current.eta = etaM[1].trim(); else if (ataM) current.eta = "✅ Ankommet: " + ataM[1].trim();
-                const dM = mtText.split(/Departure from/i); if (dM[1]) current.dep = dM[1].split("\n")[0].replace("at", "").trim();
-                const aM = mtText.split(/Arrival at/i); if (aM[1]) current.arr = aM[1].split("\n")[0].trim();
+                // Parse ny data
+                const newDep = parseDep(mtText);
+                const newArr = parseArr(mtText);
+                const newDr  = parseDr(mtText);
+                const newEta = parseEta(mtText);
+
+                // Logg gammel posisjon dersom ruten har endret seg
+                const routeChanged = (newDep && newDep !== current.dep) || (newArr && newArr !== current.arr);
+                const hasCurrentData = current.dep !== '-' && current.dep;
+                if (routeChanged && hasCurrentData) {
+                    current.history.push({
+                        dep:     current.dep,
+                        arr:     current.arr,
+                        dr:      current.dr,
+                        eta:     current.eta,
+                        ts:      current.ts,
+                        updated: current.updated
+                    });
+                    if (current.history.length > MAX_HISTORY) {
+                        current.history = current.history.slice(-MAX_HISTORY);
+                    }
+                }
+
+                if (newDr)  current.dr  = newDr;
+                if (newEta) current.eta = newEta;
+                if (newDep) current.dep = newDep;
+                if (newArr) current.arr = newArr;
             }
-            
-            current.x = xText;
-            current.ts = Date.now();
-            current.updated = new Date().toLocaleString('no-NO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            current.x       = xText;
+            current.ts      = Date.now();
+            current.updated = new Date().toLocaleString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
             localStorage.setItem(name, JSON.stringify(current));
             draw();
+        };
+
+        function parseDr(text) {
+            const m = text.match(/Draught[^0-9]*([0-9]+\.?[0-9]*)\s*m/i);
+            return m ? m[1] : null;
+        }
+        function parseEta(text) {
+            const etaM = text.match(/Reported ETA[^0-9]*([0-9]{4}-[0-9]{2}-[0-9]{2}[^\n\r]*)/i);
+            const ataM = text.match(/Actual time of arrival[^0-9]*([0-9]{4}-[0-9]{2}-[0-9]{2}[^\n\r]*)/i);
+            if (ataM) return "✅ Ankommet: " + ataM[1].trim();
+            if (etaM) return etaM[1].trim();
+            return null;
+        }
+        function parseDep(text) {
+            const m = text.split(/Departure from/i);
+            if (m[1]) return m[1].split(/\n/)[0].replace(/at\s*/i,'').trim().split(/[,\n]/)[0].trim();
+            return null;
+        }
+        function parseArr(text) {
+            const m = text.split(/Arrival at/i);
+            if (m[1]) return m[1].split(/\n/)[0].trim().split(/[,\n]/)[0].trim();
+            return null;
         }
 
         window.generateReport = function() {
-            document.getElementById('reportDate').innerText = new Date().toLocaleString('no-NO');
             let full = 0, partial = 0, empty = 0;
             shipData.forEach(ship => {
-                const data = JSON.parse(localStorage.getItem(ship.name)) || { dr: '0' };
-                const dr = parseFloat(data.dr) || 0;
-                if (dr > 17) full++; else if (dr >= 14) partial++; else empty++;
+                const st = getStatus((JSON.parse(localStorage.getItem(ship.name)) || {}).dr || 0);
+                if (st.cls === 'full') full++;
+                else if (st.cls === 'partial') partial++;
+                else empty++;
             });
-            document.getElementById('statsSummary').innerHTML = `
-                <p>Totalt antall skip: <b>12</b> | Fullastet: <b style="color:green">${full}</b> | Begrenset: <b style="color:orange">${partial}</b> | Tom: <b>${empty}</b></p>
-            `;
+            const now = new Date();
+            const ts = now.toLocaleString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }).replace(/[.:]/g, '-').replace(', ', '_').replace(' ', '');
+            const originalTitle = document.title;
+            document.title = `HSHP Intelligence - ${ts}`;
             window.print();
-        }
+            document.title = originalTitle;
+        };
 
-        window.clearAll = function() { if (confirm("Slette alt?")) { localStorage.clear(); draw(); } }
+        window.clearAll = function() {
+            if (confirm("Slette ALL data inkludert historikk?")) {
+                shipData.forEach(s => localStorage.removeItem(s.name));
+                draw();
+            }
+        };
+
         draw();
     </script>
 </body>
