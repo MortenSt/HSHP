@@ -11,31 +11,31 @@
         h1 { color: #38bdf8; margin: 0; font-size: 1.5rem; }
         h2 { color: #94a3b8; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 15px 0; }
         .btn { border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-back    { background: #334155; color: #f1f5f9; }
-        .btn-export  { background: #10b981; color: white; }
-        .btn-group   { display: flex; gap: 10px; }
+        .btn-back   { background: #334155; color: #f1f5f9; }
+        .btn-export { background: #10b981; color: white; }
+        .btn-group  { display: flex; gap: 10px; }
 
         .section { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
 
-        /* Sammendrag-kort */
+        /* Stat cards */
         .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
         .stat-card { background: #0f172a; border-radius: 8px; padding: 14px; text-align: center; }
         .stat-val  { font-size: 2rem; font-weight: bold; color: #38bdf8; }
         .stat-lbl  { font-size: 0.75em; color: #64748b; text-transform: uppercase; margin-top: 4px; }
 
-        /* Rutefrekvens */
+        /* Route / country tables */
         .route-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
         .route-table th { color: #64748b; text-align: left; padding: 6px 10px; border-bottom: 1px solid #334155; font-weight: normal; text-transform: uppercase; font-size: 0.78em; }
         .route-table td { padding: 8px 10px; border-bottom: 1px solid #1e293b; }
         .route-table tr:hover td { background: #0f172a; }
-        .bar { background: #334155; border-radius: 4px; height: 8px; margin-top: 4px; }
+        .bar  { background: #334155; border-radius: 4px; height: 8px; margin-top: 4px; }
         .bar-fill { background: #38bdf8; border-radius: 4px; height: 8px; }
         .tag { font-size: 0.7em; padding: 2px 7px; border-radius: 4px; font-weight: bold; }
         .tag-full    { background: #059669; color: white; }
         .tag-partial { background: #d97706; color: white; }
         .tag-empty   { background: #475569; color: white; }
 
-        /* Skipshistorikk */
+        /* Ship history */
         .ship-select { background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; padding: 8px 12px; font-size: 0.9em; width: 100%; margin-bottom: 15px; }
         .hist-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
         .hist-table th { color: #64748b; text-align: left; padding: 6px 10px; border-bottom: 1px solid #334155; font-weight: normal; text-transform: uppercase; font-size: 0.75em; }
@@ -43,7 +43,7 @@
         .hist-table tr:hover td { background: #0f172a; }
         .no-data { color: #475569; font-style: italic; text-align: center; padding: 30px; }
 
-        /* Lastefaktor-tidslinje */
+        /* Load factor timeline */
         .timeline { display: flex; flex-direction: column; gap: 6px; }
         .tl-row { display: flex; align-items: center; gap: 10px; font-size: 0.8em; }
         .tl-date { color: #64748b; width: 130px; flex-shrink: 0; }
@@ -52,8 +52,27 @@
         .tl-full    { background: #059669; }
         .tl-partial { background: #d97706; }
         .tl-empty   { background: #334155; }
-        .tl-legend { display: flex; gap: 15px; margin-top: 10px; font-size: 0.78em; color: #94a3b8; }
+        .tl-legend { display: flex; gap: 15px; margin-top: 10px; font-size: 0.78em; color: #94a3b8; flex-wrap: wrap; }
         .tl-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; }
+
+        /* Loading region trend */
+        .region-row { display: flex; align-items: center; gap: 10px; font-size: 0.82em; margin-bottom: 6px; }
+        .region-label { color: #64748b; width: 110px; flex-shrink: 0; font-size: 0.9em; }
+        .region-bar-wrap { flex: 1; display: flex; height: 20px; border-radius: 4px; overflow: hidden; gap: 1px; }
+        .region-seg { display: flex; align-items: center; justify-content: center; font-size: 0.7em; font-weight: bold; color: white; transition: flex 0.3s; overflow: hidden; white-space: nowrap; }
+        .reg-africa   { background: #f59e0b; }
+        .reg-brazil   { background: #3b82f6; }
+        .reg-australia{ background: #10b981; }
+        .reg-other    { background: #475569; }
+        .region-total { color: #64748b; width: 40px; text-align: right; font-size: 0.8em; }
+
+        .region-legend { display: flex; gap: 18px; margin-top: 12px; font-size: 0.78em; color: #94a3b8; flex-wrap: wrap; }
+        .reg-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 5px; }
+
+        /* Country table extras */
+        .flag-dep { font-size: 1em; margin-right: 4px; }
+        .country-arrow { color: #475569; margin: 0 6px; }
+        .section-note { font-size: 0.78em; color: #475569; margin-top: -8px; margin-bottom: 14px; }
     </style>
 </head>
 <body>
@@ -66,34 +85,59 @@
     </div>
 </div>
 
-<!-- Sammendrag -->
+<!-- Flåteoversikt -->
 <div class="section">
     <h2>Flåteoversikt</h2>
     <div class="stat-grid" id="statGrid"></div>
 </div>
 
-<!-- Rutefrekvens -->
+<!-- Port-til-port -->
 <div class="section">
-    <h2>Hyppigste ruter (alle skip)</h2>
+    <h2>Hyppigste ruter — havn til havn</h2>
+    <p class="section-note">Alle registrerte bevegelser for hele flåten, nåværende + historikk.</p>
     <table class="route-table" id="routeTable">
-        <thead><tr><th>Rute</th><th>Antall</th><th>Last snitt</th><th>Frekvens</th></tr></thead>
+        <thead><tr><th>Rute</th><th>Antall</th><th>Snitt dypgang</th><th>Frekvens</th></tr></thead>
         <tbody id="routeBody"></tbody>
     </table>
 </div>
 
-<!-- Lastefaktor over tid -->
+<!-- Land-til-land -->
+<div class="section">
+    <h2>Land til land</h2>
+    <p class="section-note">Samme data aggregert per land. Identifiserer skift mellom lastegeografier.</p>
+    <table class="route-table" id="countryTable">
+        <thead><tr><th>Fra land</th><th>Til land</th><th>Antall</th><th>Snitt dypgang</th><th>Frekvens</th></tr></thead>
+        <tbody id="countryBody"></tbody>
+    </table>
+</div>
+
+<!-- Loading region trend -->
+<div class="section">
+    <h2>Lastegeografi-trend (kun lastede reiser, dypgang > 13 m)</h2>
+    <p class="section-note">Fordeling av lastehavn-region per oppdateringsperiode. Viser om flåten beveger seg mot Afrika, Brasil eller Australia.</p>
+    <div id="regionTrend"></div>
+    <div class="region-legend">
+        <span><span class="reg-dot" style="background:#f59e0b"></span>Vest-Afrika (Guinea/Sierra Leone/Gabon/S.Afrika)</span>
+        <span><span class="reg-dot" style="background:#3b82f6"></span>Brasil</span>
+        <span><span class="reg-dot" style="background:#10b981"></span>Australia</span>
+        <span><span class="reg-dot" style="background:#475569"></span>Annet/ukjent</span>
+    </div>
+    <p id="regionEmpty" class="no-data" style="display:none">Ikke nok lastede reiser ennå.</p>
+</div>
+
+<!-- Load factor timeline -->
 <div class="section">
     <h2>Lastefaktor per registrering</h2>
     <div class="timeline" id="timeline"></div>
     <div class="tl-legend">
-        <span><span class="tl-dot" style="background:#059669"></span>Fullastet</span>
-        <span><span class="tl-dot" style="background:#d97706"></span>Begrenset</span>
-        <span><span class="tl-dot" style="background:#334155"></span>Tom</span>
+        <span><span class="tl-dot" style="background:#059669"></span>Fullastet (&gt;17m)</span>
+        <span><span class="tl-dot" style="background:#d97706"></span>Begrenset (14–17m)</span>
+        <span><span class="tl-dot" style="background:#334155"></span>Tom (&lt;14m)</span>
     </div>
-    <p id="timelineEmpty" class="no-data" style="display:none">Ikke nok historikk ennå — registrer flåten flere ganger over tid.</p>
+    <p id="timelineEmpty" class="no-data" style="display:none">Ikke nok historikk ennå.</p>
 </div>
 
-<!-- Skipshistorikk -->
+<!-- Ship history -->
 <div class="section">
     <h2>Historikk per skip</h2>
     <select class="ship-select" id="shipSelect" onchange="drawShipHistory()"></select>
@@ -101,210 +145,389 @@
 </div>
 
 <script>
-    const shipNames = [
-        "Mount Norefjell","Mount Ita","Mount Etna","Mount Blanc",
-        "Mount Matterhorn","Mount Neblina","Mount Bandeira","Mount Hua",
-        "Mount Elbrus","Mount Emai","Mount Denali","Mount Aconcagua"
-    ];
+const shipNames = [
+    "Mount Norefjell","Mount Ita","Mount Etna","Mount Blanc",
+    "Mount Matterhorn","Mount Neblina","Mount Bandeira","Mount Hua",
+    "Mount Elbrus","Mount Emai","Mount Denali","Mount Aconcagua"
+];
 
-    function loadAll() {
-        return shipNames.map(name => {
-            const d = JSON.parse(localStorage.getItem(name)) || { dep:'-', arr:'-', dr:'-', eta:'-', ts:null, history:[] };
-            if (!Array.isArray(d.history)) d.history = [];
-            return { name, ...d };
+// ── Port → Country mapping ──────────────────────────────────────────────────
+function portToCountry(port) {
+    if (!port || port === '-') return null;
+    const p = port.toLowerCase().trim();
+
+    // China
+    const china = ['yantai','tianjin','dongjiakou','lianyungang','zhanjiang','huanghua',
+        'taicang','rizhao','zhuhai','longkou','caofeidian','fangcheng','kemen','lanshan',
+        'zhenjiang','jiangyin','liuheng','cjk','ningbo','qingdao','dalian','xingang',
+        'beilun','qinhuangdao','lianyun','yangkou'];
+    if (china.some(k => p.includes(k))) return '🇨🇳 China';
+
+    // West Africa
+    if (p.includes('kamsar'))               return '🇬🇳 Guinea';
+    if (p.includes('freetown'))             return '🇸🇱 Sierra Leone';
+    if (p.includes('owendo'))               return '🇬🇦 Gabon';
+    if (p.includes('saldanha'))             return '🇿🇦 South Africa';
+    if (p.includes('buchanan'))             return '🇱🇷 Liberia';
+
+    // Brazil
+    if (p.includes('itaguai') || p.includes('porto sudeste') ||
+        p.includes('ponta da madeira') || p.includes('tubarao') ||
+        p.includes('ponta') || p.includes('spb') || p.includes('spp'))
+                                            return '🇧🇷 Brazil';
+
+    // Australia
+    if (p.includes('ashburton') || p.includes('dampier') ||
+        p.includes('port hedland') || p.includes('hay point') ||
+        p.includes('newcastle') || p.includes('gladstone'))
+                                            return '🇦🇺 Australia';
+
+    // Canada
+    if (p.includes('sept-iles') || p.includes('sept iles') ||
+        p.includes('port-cartier'))         return '🇨🇦 Canada';
+
+    // South America (non-Brazil)
+    if (p.includes('villanueva'))           return '🇨🇴 Colombia';
+    if (p.includes('guayaquil'))            return '🇪🇨 Ecuador';
+
+    // Asia
+    if (p.includes('singapore'))           return '🇸🇬 Singapore';
+    if (p.includes('yeosu') || p.includes('pohang') || p.includes('gwangyang') ||
+        p.includes('incheon') || p.includes('busan'))
+                                            return '🇰🇷 South Korea';
+    if (p.includes('mizushima') || p.includes('nagoya') ||
+        p.includes('kimitsu') || p.includes('oita'))
+                                            return '🇯🇵 Japan';
+    if (p.includes('lumut') || p.includes('kuantan'))
+                                            return '🇲🇾 Malaysia';
+
+    // Europe
+    if (p.includes('las palmas'))           return '🇪🇸 Spania (Kanariøyene)';
+    if (p.includes('port de bouc') || p.includes('dunkerque') || p.includes('fos'))
+                                            return '🇫🇷 Frankrike';
+    if (p.includes('rotterdam') || p.includes('ijmuiden'))
+                                            return '🇳🇱 Nederland';
+
+    // Waypoints / transit
+    if (p.includes('good hope') || p.includes('cogh'))
+                                            return '📍 COGH (Gjennomfart)';
+
+    return '🌍 ' + port.trim();
+}
+
+function loadingRegion(country) {
+    if (!country) return 'other';
+    if (country.includes('Guinea') || country.includes('Sierra Leone') ||
+        country.includes('Gabon') || country.includes('South Africa') || country.includes('Liberia'))
+        return 'africa';
+    if (country.includes('Brazil') || country.includes('Canada') || country.includes('Colombia'))
+        return 'brazil';
+    if (country.includes('Australia'))
+        return 'australia';
+    return 'other';
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function loadAll() {
+    return shipNames.map(name => {
+        const d = JSON.parse(localStorage.getItem(name)) || { dep:'-', arr:'-', dr:'-', eta:'-', ts:null, history:[] };
+        if (!Array.isArray(d.history)) d.history = [];
+        return { name, ...d };
+    });
+}
+
+function getStatus(dr) {
+    const d = parseFloat(dr) || 0;
+    if (d > 17)  return { label:'FULL',  cls:'full' };
+    if (d >= 14) return { label:'BEGR.', cls:'partial' };
+    return           { label:'TOM',  cls:'empty' };
+}
+
+function fmtDate(ts) {
+    if (!ts) return '-';
+    return new Date(ts).toLocaleString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+// Collect all voyage entries (current + history) across all ships
+function allEntries(ships) {
+    const out = [];
+    ships.forEach(s => {
+        if (s.dep && s.dep !== '-') out.push({ ship:s.name, dep:s.dep, arr:s.arr, dr:s.dr, ts:s.ts, updated:s.updated });
+        s.history.forEach(h => {
+            if (h.dep && h.dep !== '-') out.push({ ship:s.name, dep:h.dep, arr:h.arr, dr:h.dr, ts:h.ts, updated:h.updated });
         });
+    });
+    return out;
+}
+
+// ── Stats ────────────────────────────────────────────────────────────────────
+function drawStats(ships) {
+    let full=0, partial=0, empty=0, totalHistory=0;
+    ships.forEach(s => {
+        const st = getStatus(s.dr);
+        if (st.cls==='full') full++;
+        else if (st.cls==='partial') partial++;
+        else empty++;
+        totalHistory += s.history.length;
+    });
+    document.getElementById('statGrid').innerHTML = `
+        <div class="stat-card"><div class="stat-val" style="color:#10b981">${full}</div><div class="stat-lbl">Fullastet nå</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:#f59e0b">${partial}</div><div class="stat-lbl">Begrenset nå</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:#64748b">${empty}</div><div class="stat-lbl">Tom nå</div></div>
+        <div class="stat-card"><div class="stat-val">${totalHistory}</div><div class="stat-lbl">Loggede bevegelser</div></div>
+    `;
+}
+
+// ── Port-to-port routes ───────────────────────────────────────────────────────
+function drawRoutes(entries) {
+    const freq = {};
+    entries.forEach(e => {
+        if (!e.arr || e.arr === '-') return;
+        const key = `${e.dep} → ${e.arr}`;
+        if (!freq[key]) freq[key] = { count:0, drSum:0, drCount:0 };
+        freq[key].count++;
+        const dr = parseFloat(e.dr);
+        if (!isNaN(dr)) { freq[key].drSum += dr; freq[key].drCount++; }
+    });
+
+    const sorted = Object.entries(freq).sort((a,b) => b[1].count - a[1].count);
+    const maxCount = sorted[0]?.[1].count || 1;
+
+    const tbody = document.getElementById('routeBody');
+    if (sorted.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="no-data">Ingen rutedata ennå.</td></tr>'; return; }
+    tbody.innerHTML = sorted.map(([route, v]) => {
+        const avgDr = v.drCount ? (v.drSum / v.drCount).toFixed(1) : '-';
+        const st = avgDr !== '-' ? getStatus(avgDr) : { label:'-', cls:'empty' };
+        const pct = Math.round((v.count / maxCount) * 100);
+        return `<tr>
+            <td><b>${route}</b></td>
+            <td>${v.count}</td>
+            <td>${avgDr} m &nbsp;<span class="tag tag-${st.cls}">${st.label}</span></td>
+            <td style="min-width:120px"><div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div></td>
+        </tr>`;
+    }).join('');
+}
+
+// ── Country-to-country routes ─────────────────────────────────────────────────
+function drawCountryRoutes(entries) {
+    const freq = {};
+    entries.forEach(e => {
+        const depC = portToCountry(e.dep);
+        const arrC = portToCountry(e.arr);
+        if (!depC || !arrC) return;
+        const key = `${depC}|||${arrC}`;
+        if (!freq[key]) freq[key] = { depC, arrC, count:0, drSum:0, drCount:0 };
+        freq[key].count++;
+        const dr = parseFloat(e.dr);
+        if (!isNaN(dr)) { freq[key].drSum += dr; freq[key].drCount++; }
+    });
+
+    const sorted = Object.entries(freq).sort((a,b) => b[1].count - a[1].count);
+    const maxCount = sorted[0]?.[1].count || 1;
+
+    const tbody = document.getElementById('countryBody');
+    if (sorted.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Ingen data ennå.</td></tr>'; return; }
+    tbody.innerHTML = sorted.map(([, v]) => {
+        const avgDr = v.drCount ? (v.drSum / v.drCount).toFixed(1) : '-';
+        const st = avgDr !== '-' ? getStatus(avgDr) : { label:'-', cls:'empty' };
+        const pct = Math.round((v.count / maxCount) * 100);
+        return `<tr>
+            <td><b>${v.depC}</b></td>
+            <td><span style="color:#475569">→</span> <b>${v.arrC}</b></td>
+            <td>${v.count}</td>
+            <td>${avgDr} m &nbsp;<span class="tag tag-${st.cls}">${st.label}</span></td>
+            <td style="min-width:120px"><div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div></td>
+        </tr>`;
+    }).join('');
+}
+
+// ── Loading region trend ──────────────────────────────────────────────────────
+function drawRegionTrend(entries) {
+    // Filter only laden voyages (dr > 13) and where dep is a loading region (not China/transit)
+    const ladenEntries = entries.filter(e => {
+        const dr = parseFloat(e.dr);
+        if (isNaN(dr) || dr <= 13) return false;
+        const c = portToCountry(e.dep);
+        if (!c) return false;
+        // Exclude China, Singapore, transit as departure (those are discharge ports)
+        return !c.includes('China') && !c.includes('Singapore') && !c.includes('COGH') &&
+               !c.includes('Japan') && !c.includes('Korea') && !c.includes('Spania') &&
+               !c.includes('Nederland') && !c.includes('Frankrike');
+    });
+
+    if (ladenEntries.length < 3) {
+        document.getElementById('regionTrend').style.display = 'none';
+        document.getElementById('regionEmpty').style.display = 'block';
+        return;
     }
 
-    function getStatus(dr) {
-        const d = parseFloat(dr) || 0;
-        if (d > 17)  return { label:'FULL',    cls:'full' };
-        if (d >= 14) return { label:'BEGR.',    cls:'partial' };
-        return           { label:'TOM',     cls:'empty' };
+    // Group by month (YYYY-MM)
+    const byMonth = {};
+    ladenEntries.forEach(e => {
+        if (!e.ts) return;
+        const d = new Date(e.ts);
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        if (!byMonth[key]) byMonth[key] = { africa:0, brazil:0, australia:0, other:0 };
+        byMonth[key][loadingRegion(portToCountry(e.dep))]++;
+    });
+
+    const months = Object.keys(byMonth).sort();
+    const container = document.getElementById('regionTrend');
+
+    // Also show overall totals
+    const overall = { africa:0, brazil:0, australia:0, other:0 };
+    ladenEntries.forEach(e => {
+        overall[loadingRegion(portToCountry(e.dep))]++;
+    });
+    const overallTotal = Object.values(overall).reduce((a,b)=>a+b,0) || 1;
+
+    let html = '';
+
+    // Overall summary bar first
+    html += `<div class="region-row" style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #334155">
+        <div class="region-label" style="color:#f1f5f9;font-weight:600">Totalt</div>
+        <div class="region-bar-wrap">
+            ${overall.africa    > 0 ? `<div class="region-seg reg-africa"    style="flex:${overall.africa}"   >${overall.africa}</div>`    : ''}
+            ${overall.brazil    > 0 ? `<div class="region-seg reg-brazil"    style="flex:${overall.brazil}"   >${overall.brazil}</div>`    : ''}
+            ${overall.australia > 0 ? `<div class="region-seg reg-australia" style="flex:${overall.australia}">${overall.australia}</div>` : ''}
+            ${overall.other     > 0 ? `<div class="region-seg reg-other"     style="flex:${overall.other}"    >${overall.other}</div>`     : ''}
+        </div>
+        <div class="region-total">${overallTotal}</div>
+    </div>`;
+
+    months.forEach(month => {
+        const v = byMonth[month];
+        const total = v.africa + v.brazil + v.australia + v.other || 1;
+        const label = new Date(month + '-01').toLocaleString('no-NO', { month:'short', year:'numeric' });
+        html += `<div class="region-row">
+            <div class="region-label">${label}</div>
+            <div class="region-bar-wrap">
+                ${v.africa    > 0 ? `<div class="region-seg reg-africa"    style="flex:${v.africa}"   >${v.africa}</div>`    : ''}
+                ${v.brazil    > 0 ? `<div class="region-seg reg-brazil"    style="flex:${v.brazil}"   >${v.brazil}</div>`    : ''}
+                ${v.australia > 0 ? `<div class="region-seg reg-australia" style="flex:${v.australia}">${v.australia}</div>` : ''}
+                ${v.other     > 0 ? `<div class="region-seg reg-other"     style="flex:${v.other}"    >${v.other}</div>`     : ''}
+            </div>
+            <div class="region-total">${total}</div>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+// ── Load factor timeline ──────────────────────────────────────────────────────
+function drawTimeline(ships) {
+    const entries = [];
+    ships.forEach(s => {
+        if (s.ts) entries.push({ name:s.name, dr:s.dr, ts:s.ts });
+        s.history.forEach(h => { if (h.ts) entries.push({ name:s.name, dr:h.dr, ts:h.ts }); });
+    });
+
+    if (entries.length < 12) {
+        document.getElementById('timeline').style.display = 'none';
+        document.getElementById('timelineEmpty').style.display = 'block';
+        return;
     }
 
-    function fmtDate(ts) {
-        if (!ts) return '-';
-        return new Date(ts).toLocaleString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
-    }
+    const byDay = {};
+    entries.forEach(e => {
+        const day = new Date(e.ts).toLocaleDateString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric' });
+        if (!byDay[day]) byDay[day] = {};
+        byDay[day][e.name] = e.dr;
+    });
 
-    // --- Sammendrag ---
-    function drawStats(ships) {
-        let full=0, partial=0, empty=0, totalHistory=0;
-        ships.forEach(s => {
-            const st = getStatus(s.dr);
-            if (st.cls==='full') full++;
-            else if (st.cls==='partial') partial++;
-            else empty++;
-            totalHistory += s.history.length;
-        });
-        document.getElementById('statGrid').innerHTML = `
-            <div class="stat-card"><div class="stat-val" style="color:#10b981">${full}</div><div class="stat-lbl">Fullastet nå</div></div>
-            <div class="stat-card"><div class="stat-val" style="color:#f59e0b">${partial}</div><div class="stat-lbl">Begrenset nå</div></div>
-            <div class="stat-card"><div class="stat-val" style="color:#64748b">${empty}</div><div class="stat-lbl">Tom nå</div></div>
-            <div class="stat-card"><div class="stat-val">${totalHistory}</div><div class="stat-lbl">Loggede bevegelser</div></div>
-        `;
-    }
+    const days = Object.keys(byDay).sort((a,b) => {
+        const parse = s => { const [d,m,y] = s.split('.'); return new Date(y,m-1,d); };
+        return parse(a) - parse(b);
+    }).slice(-20);
 
-    // --- Rutefrekvens ---
-    function drawRoutes(ships) {
-        const freq = {};
-        ships.forEach(s => {
-            // Tell nåværende posisjon
-            if (s.dep && s.dep !== '-' && s.arr && s.arr !== '-') {
-                const key = `${s.dep} → ${s.arr}`;
-                if (!freq[key]) freq[key] = { count:0, drSum:0, drCount:0 };
-                freq[key].count++;
-                const dr = parseFloat(s.dr);
-                if (!isNaN(dr)) { freq[key].drSum += dr; freq[key].drCount++; }
-            }
-            // Tell historikk
-            s.history.forEach(h => {
-                if (h.dep && h.dep !== '-' && h.arr && h.arr !== '-') {
-                    const key = `${h.dep} → ${h.arr}`;
-                    if (!freq[key]) freq[key] = { count:0, drSum:0, drCount:0 };
-                    freq[key].count++;
-                    const dr = parseFloat(h.dr);
-                    if (!isNaN(dr)) { freq[key].drSum += dr; freq[key].drCount++; }
-                }
-            });
-        });
-
-        const sorted = Object.entries(freq).sort((a,b) => b[1].count - a[1].count);
-        const maxCount = sorted[0]?.[1].count || 1;
-
-        const tbody = document.getElementById('routeBody');
-        if (sorted.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="no-data">Ingen rutedata ennå.</td></tr>';
-            return;
-        }
-        tbody.innerHTML = sorted.map(([route, v]) => {
-            const avgDr = v.drCount ? (v.drSum / v.drCount).toFixed(1) : '-';
-            const st = avgDr !== '-' ? getStatus(avgDr) : { label:'-', cls:'empty' };
-            const pct = Math.round((v.count / maxCount) * 100);
-            return `<tr>
-                <td><b>${route}</b></td>
-                <td>${v.count}</td>
-                <td>${avgDr} m &nbsp;<span class="tag tag-${st.cls}">${st.label}</span></td>
-                <td style="min-width:120px">
-                    <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
-                </td>
-            </tr>`;
-        }).join('');
-    }
-
-    // --- Lastefaktor-tidslinje ---
-    // Bygger snapshots ved å gruppere alle history-entries på dato
-    function drawTimeline(ships) {
-        // Samle alle entries med timestamp
-        const entries = [];
-        ships.forEach(s => {
-            if (s.ts) entries.push({ name: s.name, dr: s.dr, ts: s.ts });
-            s.history.forEach(h => {
-                if (h.ts) entries.push({ name: s.name, dr: h.dr, ts: h.ts });
-            });
-        });
-
-        if (entries.length < 12) {
-            document.getElementById('timeline').style.display = 'none';
-            document.getElementById('timelineEmpty').style.display = 'block';
-            return;
-        }
-
-        // Grupper per dag
-        const byDay = {};
-        entries.forEach(e => {
-            const day = new Date(e.ts).toLocaleDateString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric' });
-            if (!byDay[day]) byDay[day] = {};
-            byDay[day][e.name] = e.dr; // siste registrering den dagen vinner
-        });
-
-        const days = Object.keys(byDay).sort((a,b) => {
-            const parse = s => { const [d,m,y] = s.split('.'); return new Date(y,m-1,d); };
-            return parse(a) - parse(b);
-        }).slice(-20); // vis siste 20 dager
-
-        const tl = document.getElementById('timeline');
-        tl.innerHTML = days.map(day => {
-            const snap = byDay[day];
-            let full=0, partial=0, empty=0;
-            shipNames.forEach(name => {
-                if (snap[name] !== undefined) {
-                    const st = getStatus(snap[name]);
-                    if (st.cls==='full') full++;
-                    else if (st.cls==='partial') partial++;
-                    else empty++;
-                }
-            });
-            const total = full + partial + empty || 1;
-            return `<div class="tl-row">
-                <div class="tl-date">${day}</div>
-                <div class="tl-bar-wrap">
-                    <div class="tl-seg tl-full"    style="flex:${full}">${full>0?full:''}</div>
-                    <div class="tl-seg tl-partial"  style="flex:${partial}">${partial>0?partial:''}</div>
-                    <div class="tl-seg tl-empty"    style="flex:${empty}">${empty>0?empty:''}</div>
-                </div>
-                <div style="color:#64748b;font-size:0.75em;width:60px">${Math.round(full/total*100)}% full</div>
-            </div>`;
-        }).join('');
-    }
-
-    // --- Skipshistorikk ---
-    function populateShipSelect() {
-        const sel = document.getElementById('shipSelect');
-        sel.innerHTML = shipNames.map(n => `<option value="${n}">${n}</option>`).join('');
-    }
-
-    window.drawShipHistory = function() {
-        const name = document.getElementById('shipSelect').value;
-        const data = JSON.parse(localStorage.getItem(name)) || { dep:'-', arr:'-', dr:'-', eta:'-', ts:null, history:[] };
-        if (!Array.isArray(data.history)) data.history = [];
-
-        const all = [];
-        if (data.ts) all.push({ dep:data.dep, arr:data.arr, dr:data.dr, eta:data.eta, ts:data.ts, updated:data.updated });
-        [...data.history].reverse().forEach(h => all.push(h));
-
-        const el = document.getElementById('shipHistContent');
-        if (all.length === 0) {
-            el.innerHTML = '<p class="no-data">Ingen historikk registrert for dette skipet ennå.</p>';
-            return;
-        }
-
-        el.innerHTML = `<table class="hist-table">
-            <thead><tr><th>Tidspunkt</th><th>Fra</th><th>Til</th><th>Dypgang</th><th>Status</th></tr></thead>
-            <tbody>${all.map((h,i) => {
-                const st = getStatus(h.dr);
-                const rowStyle = i === 0 ? 'color:#f1f5f9;font-weight:500' : 'color:#94a3b8';
-                return `<tr style="${rowStyle}">
-                    <td>${fmtDate(h.ts)}</td>
-                    <td>${h.dep || '-'}</td>
-                    <td>${h.arr || '-'}</td>
-                    <td>${h.dr || '-'} m</td>
-                    <td><span class="tag tag-${st.cls}">${st.label}</span></td>
-                </tr>`;
-            }).join('')}</tbody>
-        </table>`;
-    };
-
-    // --- Eksport ---
-    window.exportJSON = function() {
-        const data = {};
+    document.getElementById('timeline').innerHTML = days.map(day => {
+        const snap = byDay[day];
+        let full=0, partial=0, empty=0;
         shipNames.forEach(name => {
-            data[name] = JSON.parse(localStorage.getItem(name)) || {};
+            if (snap[name] !== undefined) {
+                const st = getStatus(snap[name]);
+                if (st.cls==='full') full++;
+                else if (st.cls==='partial') partial++;
+                else empty++;
+            }
         });
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `hshp_data_${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-    };
+        const total = full + partial + empty || 1;
+        return `<div class="tl-row">
+            <div class="tl-date">${day}</div>
+            <div class="tl-bar-wrap">
+                <div class="tl-seg tl-full"    style="flex:${full}"   >${full>0?full:''}</div>
+                <div class="tl-seg tl-partial"  style="flex:${partial}">${partial>0?partial:''}</div>
+                <div class="tl-seg tl-empty"    style="flex:${empty}"  >${empty>0?empty:''}</div>
+            </div>
+            <div style="color:#64748b;font-size:0.75em;width:60px">${Math.round(full/total*100)}% full</div>
+        </div>`;
+    }).join('');
+}
 
-    // --- Init ---
-    const ships = loadAll();
-    drawStats(ships);
-    drawRoutes(ships);
-    drawTimeline(ships);
-    populateShipSelect();
-    drawShipHistory();
+// ── Ship history table ────────────────────────────────────────────────────────
+function populateShipSelect() {
+    document.getElementById('shipSelect').innerHTML =
+        shipNames.map(n => `<option value="${n}">${n}</option>`).join('');
+}
+
+window.drawShipHistory = function() {
+    const name = document.getElementById('shipSelect').value;
+    const data = JSON.parse(localStorage.getItem(name)) || { dep:'-', arr:'-', dr:'-', eta:'-', ts:null, history:[] };
+    if (!Array.isArray(data.history)) data.history = [];
+
+    const all = [];
+    if (data.ts) all.push({ dep:data.dep, arr:data.arr, dr:data.dr, eta:data.eta, ts:data.ts, updated:data.updated });
+    [...data.history].reverse().forEach(h => all.push(h));
+
+    const el = document.getElementById('shipHistContent');
+    if (all.length === 0) {
+        el.innerHTML = '<p class="no-data">Ingen historikk registrert ennå.</p>';
+        return;
+    }
+    el.innerHTML = `<table class="hist-table">
+        <thead><tr>
+            <th>Tidspunkt</th><th>Fra havn</th><th>Fra land</th>
+            <th>Til havn</th><th>Til land</th><th>Dypgang</th><th>Status</th>
+        </tr></thead>
+        <tbody>${all.map((h,i) => {
+            const st = getStatus(h.dr);
+            const rowStyle = i === 0 ? 'color:#f1f5f9;font-weight:500' : 'color:#94a3b8';
+            const depC = portToCountry(h.dep) || '-';
+            const arrC = portToCountry(h.arr) || '-';
+            return `<tr style="${rowStyle}">
+                <td>${fmtDate(h.ts)}</td>
+                <td>${h.dep || '-'}</td>
+                <td style="font-size:0.85em">${depC}</td>
+                <td>${h.arr || '-'}</td>
+                <td style="font-size:0.85em">${arrC}</td>
+                <td>${h.dr || '-'} m</td>
+                <td><span class="tag tag-${st.cls}">${st.label}</span></td>
+            </tr>`;
+        }).join('')}</tbody>
+    </table>`;
+};
+
+// ── Export ────────────────────────────────────────────────────────────────────
+window.exportJSON = function() {
+    const data = {};
+    shipNames.forEach(name => { data[name] = JSON.parse(localStorage.getItem(name)) || {}; });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `hshp_data_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+};
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+const ships  = loadAll();
+const entries = allEntries(ships);
+drawStats(ships);
+drawRoutes(entries);
+drawCountryRoutes(entries);
+drawRegionTrend(entries);
+drawTimeline(ships);
+populateShipSelect();
+drawShipHistory();
 </script>
 </body>
 </html>
